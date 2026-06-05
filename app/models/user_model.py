@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum, TIMESTAMP
+from sqlalchemy.sql import func
 from app.database import Base
 
 class User(Base):
@@ -11,4 +12,4 @@ class User(Base):
     password = Column(String(255), nullable=False)
     id_rol = Column(Integer, nullable=True)
     estado = Column(Enum('Activo', 'Inactivo'), default='Activo', nullable=True)
-    fecha_creacion = Column(TIMESTAMP)
+    fecha_creacion = Column(TIMESTAMP, server_default=func.now(), nullable=False)

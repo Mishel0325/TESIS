@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum, TIMESTAMP
+from sqlalchemy.sql import func
 from app.database import Base
 
 class Maquila(Base):
@@ -8,4 +9,4 @@ class Maquila(Base):
     nombre = Column(String(100), nullable=False)
     direccion = Column(String(255))
     estado = Column(Enum('Activo','Inactivo'), default='Activo', nullable=True)
-    fecha_creacion = Column(TIMESTAMP)
+    fecha_creacion = Column(TIMESTAMP, server_default=func.now(), nullable=False)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 class UserCreate(BaseModel):
@@ -14,6 +15,7 @@ class UserResponse(BaseModel):
     correo: EmailStr
     id_rol: int
     estado: str
+    fecha_creacion: datetime | None
 
     class Config:
         from_attributes = True

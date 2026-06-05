@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -23,7 +24,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         apellidos=user.apellidos,
         correo=user.correo,
         password=hashed_pwd,
-        id_rol=user.id_rol
+        id_rol=user.id_rol,
+        fecha_creacion=datetime.utcnow()
     )
     db.add(db_user)
     db.commit()
