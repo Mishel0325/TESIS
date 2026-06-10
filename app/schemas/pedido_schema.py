@@ -3,7 +3,6 @@ from datetime import datetime, date
 
 class PedidoCreate(BaseModel):
     id_maquila: int
-    id_usuario: int
     codigo_pedido: str
     tipo_prenda: str | None = None
     talla: str | None = None

@@ -1,20 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.maquila_model import Maquila
+from app.models.user_model import User
 from app.schemas.maquila_schema import MaquilaCreate, MaquilaResponse
+from app.core.dependencies import require_role
 
 router = APIRouter(prefix="/maquilas", tags=["maquilas"])
 
 @router.post("/", response_model=MaquilaResponse)
 def create_maquila(
     maquila: MaquilaCreate,
-    user_id: int = Query(..., description="ID del usuario que crea la maquila"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([1]))
 ):
-    if user_id != 1:
-        raise HTTPException(status_code=403, detail="Solo el usuario 1 puede crear maquilas")
-
     db_maquila = Maquila(
         nombre=maquila.nombre,
         direccion=maquila.direccion,
@@ -26,5 +25,5 @@ def create_maquila(
     return db_maquila
 
 @router.get("/")
-def list_maquilas(db: Session = Depends(get_db)):
+def list_maquilas(db: Session = Depends(get_db), current_user: User = Depends(require_role([1, 2]))):
     return db.query(Maquila).all()

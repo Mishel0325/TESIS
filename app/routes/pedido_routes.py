@@ -4,17 +4,19 @@ from datetime import date, datetime
 from typing import Optional
 from app.database import get_db
 from app.models.pedido_model import Pedido
+from app.models.user_model import User
 from app.schemas.pedido_schema import PedidoCreate, PedidoResponse
+from app.core.dependencies import require_role
 
 router = APIRouter(prefix="/pedidos", tags=["pedidos"])
 
 # --- CRUD PEDIDOS ---
 
 @router.post("/", response_model=PedidoResponse)
-def create_pedido(pedido: PedidoCreate, db: Session = Depends(get_db)):
+def create_pedido(pedido: PedidoCreate, db: Session = Depends(get_db), current_user: User = Depends(require_role([1]))):
     db_pedido = Pedido(
         id_maquila=pedido.id_maquila,
-        id_usuario=pedido.id_usuario,
+        id_usuario=current_user.id_usuario,
         codigo_pedido=pedido.codigo_pedido,
         tipo_prenda=pedido.tipo_prenda,
         talla=pedido.talla,
@@ -32,7 +34,7 @@ def create_pedido(pedido: PedidoCreate, db: Session = Depends(get_db)):
     db.refresh(db_pedido)
     return db_pedido
 
-@router.get("/", response_model=list[PedidoResponse])
+@router.get("/", response_model=list[PedidoResponse], dependencies=[Depends(require_role([1, 2]))])
 def list_pedidos(db: Session = Depends(get_db)):
     return db.query(Pedido).all()
 
@@ -41,7 +43,8 @@ def pedidos_estado(
     id_usuario: Optional[int] = None,
     id_maquila: Optional[int] = None,
     estado_filtro: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([1, 2]))
 ):
     pedidos_query = db.query(Pedido)
 
@@ -87,15 +90,11 @@ def pedidos_estado(
 
     return result
 
-@router.get("/codigo/{codigo_pedido}/estado")
+@router.get("/codigo/{codigo_pedido}/estado", dependencies=[Depends(require_role([1, 2]))])
 def get_pedido_estado_by_codigo(
     codigo_pedido: str,
-    user_id: int = Query(..., description="ID del usuario que solicita la información"),
     db: Session = Depends(get_db)
 ):
-    if user_id not in (1, 2):
-        raise HTTPException(status_code=403, detail="Solo los usuarios 1 y 2 pueden ver el estado")
-
     pedido = db.query(Pedido).filter(Pedido.codigo_pedido == codigo_pedido).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
@@ -112,20 +111,19 @@ def get_pedido_estado_by_codigo(
 
     return f"{pedido.codigo_pedido} {estado}"
 
-@router.get("/{pedido_id}", response_model=PedidoResponse)
+@router.get("/{pedido_id}", response_model=PedidoResponse, dependencies=[Depends(require_role([1, 2]))])
 def get_pedido(pedido_id: int, db: Session = Depends(get_db)):
     pedido = db.query(Pedido).filter(Pedido.id_pedido == pedido_id).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return pedido
 
-@router.put("/{pedido_id}", response_model=PedidoResponse)
+@router.put("/{pedido_id}", response_model=PedidoResponse, dependencies=[Depends(require_role([1]))])
 def update_pedido(pedido_id: int, pedido_update: PedidoCreate, db: Session = Depends(get_db)):
     pedido = db.query(Pedido).filter(Pedido.id_pedido == pedido_id).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     pedido.id_maquila = pedido_update.id_maquila
-    pedido.id_usuario = pedido_update.id_usuario
     pedido.codigo_pedido = pedido_update.codigo_pedido
     pedido.tipo_prenda = pedido_update.tipo_prenda
     pedido.talla = pedido_update.talla
@@ -142,7 +140,7 @@ def update_pedido(pedido_id: int, pedido_update: PedidoCreate, db: Session = Dep
     db.refresh(pedido)
     return pedido
 
-@router.delete("/{pedido_id}")
+@router.delete("/{pedido_id}", dependencies=[Depends(require_role([1]))])
 def delete_pedido(pedido_id: int, db: Session = Depends(get_db)):
     pedido = db.query(Pedido).filter(Pedido.id_pedido == pedido_id).first()
     if not pedido:
