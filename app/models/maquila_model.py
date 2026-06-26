@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum, TIMESTAMP
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -10,3 +11,5 @@ class Maquila(Base):
     direccion = Column(String(255))
     estado = Column(Enum('Activo','Inactivo'), default='Activo', nullable=True)
     fecha_creacion = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+
+    # Las relaciones backref se crean automáticamente desde otros modelos

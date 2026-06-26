@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, Date, Text, Enum
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -19,3 +20,7 @@ class Pedido(Base):
     prioridad = Column(Enum('Baja', 'Media', 'Alta'), default='Media', nullable=True)
     estado = Column(Enum('Pendiente', 'A tiempo', 'Retrasado'), default='Pendiente', nullable=True)
     observaciones = Column(Text, nullable=True)
+
+    # Relaciones
+    maquila = relationship("Maquila", backref="pedidos")
+    usuario = relationship("User", backref="pedidos")
