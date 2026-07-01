@@ -2,6 +2,7 @@
 Script to update the `fases` table with the pantalones workflow.
 Run this from the project root: `python scripts/update_fases.py`
 """
+# Commit note: updated on 2026-06-30 to include pantalones fases script
 from app.database import SessionLocal
 from app.models.fase_model import Fase
 
