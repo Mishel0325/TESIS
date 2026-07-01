@@ -16,7 +16,9 @@ from app.routes import (
 	archivo_routes,
 	control_calidad_routes,
 	envio_insumo_routes,
+	prenda_routes,
 	fase_routes,
+	tarea_routes,
 	historial_routes,
 	informe_routes,
 	seguimiento_routes,
@@ -42,7 +44,9 @@ app.include_router(asignacion_routes.router)
 app.include_router(archivo_routes.router)
 app.include_router(control_calidad_routes.router)
 app.include_router(envio_insumo_routes.router)
+app.include_router(prenda_routes.router)
 app.include_router(fase_routes.router)
+app.include_router(tarea_routes.router)
 app.include_router(historial_routes.router)
 app.include_router(informe_routes.router)
 app.include_router(seguimiento_routes.router)

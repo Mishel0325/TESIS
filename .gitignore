@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.idea/
+.vscode/
+.env
+*.log
+package-lock.json
