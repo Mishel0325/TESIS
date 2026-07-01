@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class HistorialCreate(BaseModel):
-    id_pedido: int | None = None
+    id_pedido: int
     estado_anterior: str | None = None
     estado_nuevo: str | None = None
     observacion: str | None = None
