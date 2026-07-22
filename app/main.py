@@ -62,7 +62,7 @@ app.include_router(asignacion_router, prefix="/asignaciones", tags=["Asignacione
 app.include_router(archivo_router, prefix="/archivos", tags=["Archivos"])
 app.include_router(control_calidad_router, prefix="/control-calidad", tags=["Control Calidad"])
 app.include_router(envio_insumo_router, prefix="/envio-insumos", tags=["Envío Insumos"])
-app.include_router(prenda_router, prefix="/prendas", tags=["Prendas"])
+app.include_router(prenda_router)
 app.include_router(fase_router, prefix="/fases", tags=["Fases"])
 app.include_router(tarea_router, prefix="/tareas", tags=["Tareas"])
 app.include_router(historial_router, prefix="/historial", tags=["Historial"])
