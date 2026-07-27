@@ -18,8 +18,10 @@ from app.schemas.pedido_schema import (
 
 
 router = APIRouter(
+    prefix="/pedidos",
     tags=["Pedidos"]
 )
+
 
 
 # =====================================================
@@ -34,7 +36,7 @@ router = APIRouter(
 def create_pedido(
     pedido: PedidoCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role([1, 2]))
+    current_user: User = Depends(require_role([1,2]))
 ):
 
     pedido_existente = (
@@ -47,14 +49,13 @@ def create_pedido(
 
 
     if pedido_existente:
-
         raise HTTPException(
             status_code=409,
             detail="Ya existe un pedido con ese código"
         )
 
 
-    db_pedido = Pedido(
+    nuevo_pedido = Pedido(
 
         id_maquila=pedido.id_maquila,
 
@@ -90,13 +91,13 @@ def create_pedido(
 
     try:
 
-        db.add(db_pedido)
+        db.add(nuevo_pedido)
 
         db.commit()
 
-        db.refresh(db_pedido)
+        db.refresh(nuevo_pedido)
 
-        return db_pedido
+        return nuevo_pedido
 
 
     except Exception as error:
@@ -104,8 +105,11 @@ def create_pedido(
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=f"No se pudo registrar el pedido: {str(error)}"
+
         )
 
 
@@ -116,27 +120,32 @@ def create_pedido(
 
 @router.get(
     "/",
-    response_model=list[PedidoResponse],
-    dependencies=[
-        Depends(require_role([1,2]))
-    ]
+    response_model=list[PedidoResponse]
 )
 def list_pedidos(
-    db: Session = Depends(get_db)
+
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(require_role([1,2]))
+
 ):
 
     return (
+
         db.query(Pedido)
+
         .order_by(
             Pedido.id_pedido.desc()
         )
+
         .all()
+
     )
 
 
 
 # =====================================================
-# CONSULTAR ESTADO
+# PEDIDOS POR ESTADO
 # =====================================================
 
 @router.get("/estado")
@@ -154,63 +163,60 @@ def pedidos_estado(
 
 ):
 
-    pedidos_query = db.query(Pedido)
+
+    consulta = db.query(Pedido)
 
 
-    if id_usuario is not None:
+    if id_usuario:
 
-        pedidos_query = pedidos_query.filter(
+        consulta = consulta.filter(
             Pedido.id_usuario == id_usuario
         )
 
 
-    if id_maquila is not None:
+    if id_maquila:
 
-        pedidos_query = pedidos_query.filter(
+        consulta = consulta.filter(
             Pedido.id_maquila == id_maquila
         )
 
 
-    pedidos = pedidos_query.all()
+    pedidos = consulta.all()
 
-    hoy = date.today()
 
     resultado = []
+
+
+    hoy = date.today()
 
 
     for pedido in pedidos:
 
 
-        # Respeta estados manuales
-        if pedido.estado in [
+        estado = pedido.estado
+
+
+        if estado not in [
             "Finalizado",
             "Entregado"
         ]:
 
-            estado_calculado = pedido.estado
-
-
-        else:
-
-            estado_calculado = "Pendiente"
-
 
             if pedido.fecha_entrega:
 
-                if pedido.fecha_entrega >= hoy:
+                if pedido.fecha_entrega < hoy:
 
-                    estado_calculado = "A tiempo"
+                    estado = "Retrasado"
 
+                else:
 
-                elif pedido.fecha_entrega < hoy:
-
-                    estado_calculado = "Retrasado"
+                    estado = "A tiempo"
 
 
 
         if estado_filtro:
 
-            if estado_calculado != estado_filtro:
+            if estado != estado_filtro:
 
                 continue
 
@@ -240,7 +246,7 @@ def pedidos_estado(
 
             "prioridad": pedido.prioridad,
 
-            "estado": estado_calculado,
+            "estado": estado,
 
             "progreso": pedido.progreso,
 
@@ -253,23 +259,25 @@ def pedidos_estado(
 
     return resultado
 
+
+
 # =====================================================
 # ESTADO POR CÓDIGO
 # =====================================================
 
 @router.get(
-    "/codigo/{codigo_pedido}/estado",
-    dependencies=[
-        Depends(require_role([1,2]))
-    ]
+    "/codigo/{codigo_pedido}/estado"
 )
-def get_pedido_estado_by_codigo(
+def estado_codigo(
 
     codigo_pedido: str,
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(require_role([1,2]))
 
 ):
+
 
     pedido = (
 
@@ -287,39 +295,45 @@ def get_pedido_estado_by_codigo(
     if not pedido:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Pedido no encontrado"
+
         )
 
 
     return {
 
-        "codigo_pedido": pedido.codigo_pedido,
+        "codigo_pedido":
+        pedido.codigo_pedido,
 
-        "estado": pedido.estado,
+        "estado":
+        pedido.estado,
 
-        "progreso": pedido.progreso
+        "progreso":
+        pedido.progreso
 
     }
 
 
 
 # =====================================================
-# ÚLTIMOS 3 PEDIDOS
+# PEDIDOS RECIENTES
 # =====================================================
 
 @router.get(
     "/recientes",
-    response_model=list[PedidoResponse],
-    dependencies=[
-        Depends(require_role([1,2]))
-    ]
+    response_model=list[PedidoResponse]
 )
-def get_pedidos_recientes(
+def pedidos_recientes(
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(require_role([1,2]))
 
 ):
+
 
     return (
 
@@ -338,36 +352,34 @@ def get_pedidos_recientes(
 
 
 # =====================================================
-# BUSCAR POR CÓDIGO
+# BUSCAR PEDIDO
 # =====================================================
 
 @router.get(
     "/buscar",
-    response_model=list[PedidoResponse],
-    dependencies=[
-        Depends(require_role([1,2]))
-    ]
+    response_model=list[PedidoResponse]
 )
-def buscar_pedido_codigo(
+def buscar_pedido(
 
     codigo: str,
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(require_role([1,2]))
 
 ):
+
 
     return (
 
         db.query(Pedido)
 
         .filter(
+
             Pedido.codigo_pedido.ilike(
                 f"%{codigo}%"
             )
-        )
 
-        .order_by(
-            Pedido.id_pedido.desc()
         )
 
         .all()
@@ -377,62 +389,16 @@ def buscar_pedido_codigo(
 
 
 # =====================================================
-# OBTENER POR ID
+# OBTENER PEDIDO POR ID
 # =====================================================
 
 @router.get(
     "/{pedido_id}",
-    response_model=PedidoResponse,
-    dependencies=[
-        Depends(require_role([1,2]))
-    ]
-)
-def get_pedido(
-
-    pedido_id: int,
-
-    db: Session = Depends(get_db)
-
-):
-
-    pedido = (
-
-        db.query(Pedido)
-
-        .filter(
-            Pedido.id_pedido == pedido_id
-        )
-
-        .first()
-
-    )
-
-
-    if not pedido:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Pedido no encontrado"
-        )
-
-
-    return pedido
-
-
-
-# =====================================================
-# ACTUALIZAR PEDIDO
-# =====================================================
-
-@router.put(
-    "/{pedido_id}",
     response_model=PedidoResponse
 )
-def update_pedido(
+def obtener_pedido(
 
-    pedido_id: int,
-
-    pedido_update: PedidoUpdate,
+    pedido_id:int,
 
     db: Session = Depends(get_db),
 
@@ -457,71 +423,38 @@ def update_pedido(
     if not pedido:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Pedido no encontrado"
+
         )
 
 
-
-    datos = pedido_update.model_dump(
-        exclude_unset=True
-    )
-
-
-
-    for campo, valor in datos.items():
-
-        setattr(
-            pedido,
-            campo,
-            valor
-        )
-
-
-
-    # Si el progreso llega a 100,
-    # cambia automáticamente a finalizado
-    if pedido.progreso == 100:
-
-        pedido.estado = "Finalizado"
-
-
-
-    try:
-
-        db.commit()
-
-        db.refresh(pedido)
-
-        return pedido
-
-
-
-    except Exception as error:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"No se pudo actualizar el pedido: {str(error)}"
-        )
+    return pedido
 
 
 
 # =====================================================
-# ELIMINAR PEDIDO
+# ACTUALIZAR PEDIDO
 # =====================================================
 
-@router.delete("/{pedido_id}")
-def delete_pedido(
+@router.put(
+    "/{pedido_id}",
+    response_model=PedidoResponse
+)
+def actualizar_pedido(
 
-    pedido_id: int,
+    pedido_id:int,
 
-    db: Session = Depends(get_db),
+    pedido_update:PedidoUpdate,
 
-    current_user: User = Depends(require_role([1]))
+    db:Session=Depends(get_db),
+
+    current_user:User=Depends(require_role([1,2]))
 
 ):
+
 
     pedido = (
 
@@ -539,30 +472,94 @@ def delete_pedido(
     if not pedido:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Pedido no encontrado"
+
         )
 
 
-    try:
-
-        db.delete(pedido)
-
-        db.commit()
+    datos = pedido_update.model_dump(
+        exclude_unset=True
+    )
 
 
-        return {
-            "detail":
-            "Pedido eliminado correctamente"
-        }
+    for campo, valor in datos.items():
+
+        setattr(
+            pedido,
+            campo,
+            valor
+        )
 
 
 
-    except Exception as error:
+    if pedido.progreso == 100:
 
-        db.rollback()
+        pedido.estado="Finalizado"
+
+
+
+    db.commit()
+
+    db.refresh(pedido)
+
+
+    return pedido
+
+
+
+# =====================================================
+# ELIMINAR PEDIDO
+# =====================================================
+
+@router.delete(
+    "/{pedido_id}"
+)
+def eliminar_pedido(
+
+    pedido_id:int,
+
+    db:Session=Depends(get_db),
+
+    current_user:User=Depends(require_role([1]))
+
+):
+
+
+    pedido = (
+
+        db.query(Pedido)
+
+        .filter(
+            Pedido.id_pedido == pedido_id
+        )
+
+        .first()
+
+    )
+
+
+    if not pedido:
 
         raise HTTPException(
-            status_code=500,
-            detail=f"No se pudo eliminar el pedido: {str(error)}"
+
+            status_code=404,
+
+            detail="Pedido no encontrado"
+
         )
+
+
+    db.delete(pedido)
+
+    db.commit()
+
+
+    return {
+
+        "detail":
+        "Pedido eliminado correctamente"
+
+    }

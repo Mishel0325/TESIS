@@ -105,3 +105,16 @@ padding:10px;
 border-radius:8px;
 
 }
+
+
+.usuarios-lista {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+
+.usuarios-modal {
+    max-height: 90vh;
+    overflow: hidden;
+}

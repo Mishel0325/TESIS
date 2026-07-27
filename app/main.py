@@ -56,7 +56,8 @@ app.add_middleware(
 
     allow_origins=[
 
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
 
     ],
 
@@ -85,48 +86,64 @@ Base.metadata.create_all(
 # =========================
 
 
-# Auth
+# =========================
+# AUTENTICACIÓN
+# =========================
+
 app.include_router(
     auth_router
 )
 
 
 
-# Usuarios
+# =========================
+# USUARIOS
+# =========================
+
+app.include_router(
+    user_router
+)
+
+
+
+# =========================
+# MAQUILAS
+# =========================
+
+app.include_router(
+    maquila_router
+)
+
+
+
+# =========================
+# PEDIDOS
+# pedido_routes.py tiene:
+# prefix="/pedidos"
+# =========================
+
+app.include_router(
+    pedido_router
+)
+
+
+
+# =========================
+# SEGUIMIENTO
+# seguimiento_routes.py tiene:
+# prefix="/seguimiento"
+# =========================
+
 app.include_router(
     seguimiento_router
 )
 
-# Maquilas
-app.include_router(
-    maquila_router,
-    prefix="/maquilas",
-    tags=["Maquilas"]
-)
 
 
+# =========================
+# ROLES
+# =========================
 
-# Pedidos
-# Incluye:
-# POST   /pedidos/
-# GET    /pedidos/
-# GET    /pedidos/recientes
-# GET    /pedidos/buscar
-# PUT    /pedidos/{pedido_id}
-
-app.include_router(
-
-    pedido_router,
-
-    prefix="/pedidos",
-
-    tags=["Pedidos"]
-
-)
-
-
-
-# Roles
 app.include_router(
     role_router,
     prefix="/roles",
@@ -135,7 +152,10 @@ app.include_router(
 
 
 
-# Permisos
+# =========================
+# PERMISOS
+# =========================
+
 app.include_router(
     permiso_router,
     prefix="/permisos",
@@ -144,7 +164,10 @@ app.include_router(
 
 
 
-# Roles permisos
+# =========================
+# ROLES PERMISOS
+# =========================
+
 app.include_router(
     rol_permiso_router,
     prefix="/roles-permisos",
@@ -153,7 +176,10 @@ app.include_router(
 
 
 
-# Insumos
+# =========================
+# INSUMOS
+# =========================
+
 app.include_router(
     insumo_router,
     prefix="/insumos",
@@ -162,7 +188,10 @@ app.include_router(
 
 
 
-# Movimientos
+# =========================
+# MOVIMIENTOS
+# =========================
+
 app.include_router(
     movimiento_router,
     prefix="/movimientos",
@@ -171,7 +200,10 @@ app.include_router(
 
 
 
-# Asignaciones
+# =========================
+# ASIGNACIONES
+# =========================
+
 app.include_router(
     asignacion_router,
     prefix="/asignaciones",
@@ -180,7 +212,10 @@ app.include_router(
 
 
 
-# Archivos
+# =========================
+# ARCHIVOS
+# =========================
+
 app.include_router(
     archivo_router,
     prefix="/archivos",
@@ -189,7 +224,10 @@ app.include_router(
 
 
 
-# Control calidad
+# =========================
+# CONTROL CALIDAD
+# =========================
+
 app.include_router(
     control_calidad_router,
     prefix="/control-calidad",
@@ -198,7 +236,10 @@ app.include_router(
 
 
 
-# Envío insumos
+# =========================
+# ENVÍO INSUMOS
+# =========================
+
 app.include_router(
     envio_insumo_router,
     prefix="/envio-insumos",
@@ -209,9 +250,7 @@ app.include_router(
 
 # =========================
 # PRENDAS
-# IMPORTANTE:
-# prenda_routes.py YA TIENE:
-# prefix="/prendas"
+# prenda_routes.py ya tiene prefix
 # =========================
 
 app.include_router(
@@ -220,7 +259,10 @@ app.include_router(
 
 
 
-# Fases
+# =========================
+# FASES
+# =========================
+
 app.include_router(
     fase_router,
     prefix="/fases",
@@ -229,7 +271,10 @@ app.include_router(
 
 
 
-# Tareas
+# =========================
+# TAREAS
+# =========================
+
 app.include_router(
     tarea_router,
     prefix="/tareas",
@@ -238,7 +283,10 @@ app.include_router(
 
 
 
-# Historial
+# =========================
+# HISTORIAL
+# =========================
+
 app.include_router(
     historial_router,
     prefix="/historial",
@@ -247,20 +295,14 @@ app.include_router(
 
 
 
-# Informes
+# =========================
+# INFORMES
+# =========================
+
 app.include_router(
     informe_router,
     prefix="/informes",
     tags=["Informes"]
-)
-
-
-
-# Seguimiento
-app.include_router(
-    seguimiento_router,
-    prefix="/seguimiento",
-    tags=["Seguimiento"]
 )
 
 

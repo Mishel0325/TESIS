@@ -770,6 +770,8 @@ function DetallesPedido({ pedido }) {
 
 function SupervisorDashboard({ usuario, onLogout }) {
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
+  const [menuCrearAbierto, setMenuCrearAbierto] = useState(false);
+  const [rolNuevoUsuario, setRolNuevoUsuario] = useState(null);
   const [modalCrearPedidoAbierto, setModalCrearPedidoAbierto] = useState(false);
   const [modalMaquilaAbierto, setModalMaquilaAbierto] = useState(false);
   const [modalUsuariosAbierto, setModalUsuariosAbierto] = useState(false);
@@ -981,7 +983,10 @@ function SupervisorDashboard({ usuario, onLogout }) {
     "Usuario";
 
   const nombreRol =
-    usuario?.rol || (usuario?.id_rol === 2 ? "Supervisora" : "Usuario");
+    usuario?.rol ||
+    Number(usuario?.id_rol) === 1
+      ? "Supervisor"
+      : "Consulta";
 
   const reiniciarEditar = useCallback(() => {
     setModalEditarAbierto(false);
@@ -1006,6 +1011,12 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const cerrarEliminar = useCallback(() => {
     if (!eliminando) reiniciarEliminar();
   }, [eliminando, reiniciarEliminar]);
+
+
+  const abrirCrearUsuario = (rol) => {
+    setRolNuevoUsuario(rol);
+    setModalUsuariosAbierto(true);
+  };
 
   const abrirModalEstado = (tipo) => {
     setTipoEstadoModal(tipo);
@@ -1219,6 +1230,42 @@ function SupervisorDashboard({ usuario, onLogout }) {
               </span>
             </button>
 
+            {Number(usuario?.id_rol) === 1 && (
+              <div className="dashboard-create-container">
+                <button
+                type="button"
+                className="dashboard-create-button"
+                onClick={() =>
+                  setMenuCrearAbierto((actual)=>!actual)
+                  }>
+                    +
+                    </button>
+                    
+                    {menuCrearAbierto && (
+                      
+                      <div className="dashboard-create-menu">
+                        <button
+                        onClick={()=>{
+                          setModalMaquilaAbierto(true);
+                          setMenuCrearAbierto(false);
+                          }}
+                          >
+                            🏭 Crear Maquila
+                            </button>
+                            
+                            <button
+                            onClick={()=>{
+                              abrirCrearUsuario(1);
+                              setMenuCrearAbierto(false);
+                              }}
+                              >
+                                👤 Crear Usuario
+                                </button>
+                                    </div>
+                                  )}
+                                  </div>
+                                )}
+
             {menuUsuarioAbierto && (
               <div className="dashboard-dropdown">
                 <div className="dashboard-dropdown-user">
@@ -1303,46 +1350,6 @@ function SupervisorDashboard({ usuario, onLogout }) {
             <div className="summary-icon">✓</div>
           </article>
         </section>
-
-        <section className="dashboard-panel admin-panel">
-
-  <div className="dashboard-panel-header">
-    <div>
-      <h2>Gestión administrativa</h2>
-      <small>
-        Administración de maquilas y usuarios del sistema
-      </small>
-    </div>
-  </div>
-
-
-  <div className="management-actions">
-
-
-    <button
-      type="button"
-      onClick={() => setModalMaquilaAbierto(true)}
-    >
-
-      🏭 Crear Maquila
-
-    </button>
-
-
-
-    <button
-      type="button"
-      onClick={() => setModalUsuariosAbierto(true)}
-    >
-
-      👥 Usuarios
-
-    </button>
-
-
-  </div>
-
-</section>
 
         <section className="dashboard-panel">
           <div className="dashboard-panel-header">
@@ -1602,7 +1609,12 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
   abierto={modalUsuariosAbierto}
 
-  onCerrar={() => setModalUsuariosAbierto(false)}
+  rolInicial={rolNuevoUsuario}
+
+  onCerrar={() => {
+    setModalUsuariosAbierto(false);
+    setRolNuevoUsuario(null);
+  }}
 
 />
 
