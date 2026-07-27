@@ -768,9 +768,439 @@ function DetallesPedido({ pedido }) {
    COMPONENTE PRINCIPAL
 ===================================================== */
 
+
+function Icono({ nombre, size = 20, className = "" }) {
+  const propiedades = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    className,
+    "aria-hidden": true,
+  };
+
+  switch (nombre) {
+    case "dashboard":
+      return (
+        <svg {...propiedades}>
+          <rect x="3" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="3" width="7" height="7" rx="2" />
+          <rect x="3" y="14" width="7" height="7" rx="2" />
+          <rect x="14" y="14" width="7" height="7" rx="2" />
+        </svg>
+      );
+    case "orders":
+      return (
+        <svg {...propiedades}>
+          <path d="M6 3h9l3 3v15H6z" />
+          <path d="M14 3v4h4" />
+          <path d="M9 11h6M9 15h6" />
+        </svg>
+      );
+    case "plus":
+      return (
+        <svg {...propiedades}>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      );
+    case "edit":
+      return (
+        <svg {...propiedades}>
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z" />
+        </svg>
+      );
+    case "trash":
+      return (
+        <svg {...propiedades}>
+          <path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14" />
+          <path d="M10 11v6M14 11v6" />
+        </svg>
+      );
+    case "factory":
+      return (
+        <svg {...propiedades}>
+          <path d="M3 21V9l6 3V8l6 4V5h6v16z" />
+          <path d="M7 17h2M12 17h2M17 17h2" />
+        </svg>
+      );
+    case "users":
+      return (
+        <svg {...propiedades}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case "refresh":
+      return (
+        <svg {...propiedades}>
+          <path d="M20 6v5h-5" />
+          <path d="M4 18v-5h5" />
+          <path d="M18.5 9A7 7 0 0 0 6.2 6.2L4 8M5.5 15A7 7 0 0 0 17.8 17.8L20 16" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg {...propiedades}>
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-4-4" />
+        </svg>
+      );
+    case "bell":
+      return (
+        <svg {...propiedades}>
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+          <path d="M10 21h4" />
+        </svg>
+      );
+    case "menu":
+      return (
+        <svg {...propiedades}>
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      );
+    case "chevron":
+      return (
+        <svg {...propiedades}>
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      );
+    case "logout":
+      return (
+        <svg {...propiedades}>
+          <path d="M10 17l5-5-5-5M15 12H3" />
+          <path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" />
+        </svg>
+      );
+    case "package":
+      return (
+        <svg {...propiedades}>
+          <path d="m21 8-9-5-9 5 9 5z" />
+          <path d="M3 8v8l9 5 9-5V8M12 13v8" />
+        </svg>
+      );
+    case "clock":
+      return (
+        <svg {...propiedades}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      );
+    case "alert":
+      return (
+        <svg {...propiedades}>
+          <path d="M10.3 3.3 2.7 17a2 2 0 0 0 1.8 3h15a2 2 0 0 0 1.8-3L13.7 3.3a2 2 0 0 0-3.4 0z" />
+          <path d="M12 9v4M12 17h.01" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg {...propiedades}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8 12 3 3 5-6" />
+        </svg>
+      );
+    case "layers":
+      return (
+        <svg {...propiedades}>
+          <path d="m12 2 9 5-9 5-9-5z" />
+          <path d="m3 12 9 5 9-5M3 17l9 5 9-5" />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg {...propiedades}>
+          <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg {...propiedades}>
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+      );
+    case "more":
+      return (
+        <svg {...propiedades}>
+          <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+          <circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function TarjetaKPI({ titulo, valor, detalle, icono, tono, onClick }) {
+  const contenido = (
+    <>
+      <div className={`enterprise-kpi-icon enterprise-kpi-icon-${tono}`}>
+        <Icono nombre={icono} size={23} />
+      </div>
+      <div className="enterprise-kpi-content">
+        <span>{titulo}</span>
+        <strong>{valor}</strong>
+        <small>{detalle}</small>
+      </div>
+      {onClick && <Icono nombre="chevron" size={17} className="enterprise-kpi-arrow" />}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={`enterprise-kpi-card enterprise-kpi-card-${tono}`}
+        onClick={onClick}
+      >
+        {contenido}
+      </button>
+    );
+  }
+
+  return (
+    <article className={`enterprise-kpi-card enterprise-kpi-card-${tono}`}>
+      {contenido}
+    </article>
+  );
+}
+
+function GraficoDonutEstados({ activos, retrasados, finalizados }) {
+  const total = activos + retrasados + finalizados;
+  const porcentajeActivos = total ? (activos / total) * 100 : 0;
+  const porcentajeRetrasados = total ? (retrasados / total) * 100 : 0;
+  const limiteActivos = porcentajeActivos;
+  const limiteRetrasados = porcentajeActivos + porcentajeRetrasados;
+
+  const fondo = total
+    ? `conic-gradient(
+        #5f67e8 0% ${limiteActivos}%,
+        #f5a524 ${limiteActivos}% ${limiteRetrasados}%,
+        #25b77a ${limiteRetrasados}% 100%
+      )`
+    : "conic-gradient(#e8ebf2 0% 100%)";
+
+  return (
+    <div className="enterprise-donut-layout">
+      <div className="enterprise-donut" style={{ background: fondo }}>
+        <div className="enterprise-donut-center">
+          <strong>{total}</strong>
+          <span>Pedidos</span>
+        </div>
+      </div>
+
+      <div className="enterprise-chart-legend">
+        <div>
+          <span className="enterprise-legend-dot enterprise-legend-active" />
+          <p>
+            <strong>{activos}</strong>
+            <small>Activos</small>
+          </p>
+        </div>
+        <div>
+          <span className="enterprise-legend-dot enterprise-legend-delayed" />
+          <p>
+            <strong>{retrasados}</strong>
+            <small>Retrasados</small>
+          </p>
+        </div>
+        <div>
+          <span className="enterprise-legend-dot enterprise-legend-finished" />
+          <p>
+            <strong>{finalizados}</strong>
+            <small>Finalizados</small>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function construirDatosTendencia(pedidos, intervalo) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const crearRegistro = (clave, etiqueta) => ({
+    clave,
+    etiqueta,
+    total: 0,
+    unidades: 0,
+  });
+
+  let periodos = [];
+
+  if (intervalo === "diario") {
+    periodos = Array.from({ length: 7 }, (_, indice) => {
+      const fecha = new Date(hoy);
+      fecha.setDate(hoy.getDate() - (6 - indice));
+      const clave = fecha.toISOString().slice(0, 10);
+      const etiqueta = new Intl.DateTimeFormat("es-EC", {
+        weekday: "short",
+      })
+        .format(fecha)
+        .replace(".", "");
+      return crearRegistro(clave, etiqueta);
+    });
+  } else if (intervalo === "semanal") {
+    periodos = Array.from({ length: 8 }, (_, indice) => {
+      const fin = new Date(hoy);
+      fin.setDate(hoy.getDate() - (7 - indice) * 7);
+      const inicio = new Date(fin);
+      inicio.setDate(fin.getDate() - 6);
+      const clave = `${inicio.toISOString().slice(0, 10)}_${fin
+        .toISOString()
+        .slice(0, 10)}`;
+      return crearRegistro(clave, `S${indice + 1}`);
+    });
+  } else {
+    periodos = Array.from({ length: 6 }, (_, indice) => {
+      const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - (5 - indice), 1);
+      const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}`;
+      const etiqueta = new Intl.DateTimeFormat("es-EC", {
+        month: "short",
+      })
+        .format(fecha)
+        .replace(".", "");
+      return crearRegistro(clave, etiqueta);
+    });
+  }
+
+  pedidos.forEach((pedido) => {
+    if (!pedido.fechaIngresoISO) return;
+
+    const fecha = new Date(`${pedido.fechaIngresoISO}T00:00:00`);
+    if (Number.isNaN(fecha.getTime())) return;
+
+    let posicion = -1;
+
+    if (intervalo === "diario") {
+      posicion = periodos.findIndex(
+        (periodo) => periodo.clave === pedido.fechaIngresoISO
+      );
+    } else if (intervalo === "semanal") {
+      posicion = periodos.findIndex((periodo) => {
+        const [inicio, fin] = periodo.clave.split("_");
+        return pedido.fechaIngresoISO >= inicio && pedido.fechaIngresoISO <= fin;
+      });
+    } else {
+      const clavePedido = `${fecha.getFullYear()}-${String(
+        fecha.getMonth() + 1
+      ).padStart(2, "0")}`;
+      posicion = periodos.findIndex((periodo) => periodo.clave === clavePedido);
+    }
+
+    if (posicion >= 0) {
+      periodos[posicion].total += 1;
+      periodos[posicion].unidades += Number(pedido.cantidad || 0);
+    }
+  });
+
+  return periodos;
+}
+
+function GraficoTendencia({ datos }) {
+  const ancho = 620;
+  const alto = 230;
+  const margenX = 36;
+  const margenSuperior = 24;
+  const margenInferior = 46;
+  const altoUtil = alto - margenSuperior - margenInferior;
+  const maximo = Math.max(...datos.map((dato) => dato.total), 1);
+  const separacion =
+    datos.length > 1 ? (ancho - margenX * 2) / (datos.length - 1) : 0;
+
+  const puntos = datos.map((dato, indice) => {
+    const x = margenX + indice * separacion;
+    const y = margenSuperior + altoUtil - (dato.total / maximo) * altoUtil;
+    return { ...dato, x, y };
+  });
+
+  const ruta = puntos.map((punto) => `${punto.x},${punto.y}`).join(" ");
+
+  return (
+    <div className="enterprise-line-chart">
+      <svg
+        viewBox={`0 0 ${ancho} ${alto}`}
+        role="img"
+        aria-label="Tendencia de pedidos registrados"
+      >
+        {[0, 1, 2, 3].map((linea) => {
+          const y = margenSuperior + (altoUtil / 3) * linea;
+          return (
+            <line
+              key={linea}
+              x1={margenX}
+              y1={y}
+              x2={ancho - margenX}
+              y2={y}
+              stroke="#e9ebf2"
+              strokeWidth="1"
+            />
+          );
+        })}
+
+        <polyline
+          points={ruta}
+          fill="none"
+          stroke="#5f67e8"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {puntos.map((punto) => (
+          <g key={punto.clave}>
+            <circle
+              cx={punto.x}
+              cy={punto.y}
+              r="5"
+              fill="#ffffff"
+              stroke="#5f67e8"
+              strokeWidth="3"
+            />
+            <text
+              x={punto.x}
+              y={punto.y - 13}
+              textAnchor="middle"
+              fontSize="12"
+              fontWeight="700"
+              fill="#252b42"
+            >
+              {punto.total}
+            </text>
+            <text
+              x={punto.x}
+              y={alto - 18}
+              textAnchor="middle"
+              fontSize="12"
+              fill="#7a8299"
+            >
+              {punto.etiqueta}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 function SupervisorDashboard({ usuario, onLogout }) {
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
   const [menuCrearAbierto, setMenuCrearAbierto] = useState(false);
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
+  const [busquedaGeneral, setBusquedaGeneral] = useState("");
+  const [buscadorAbierto, setBuscadorAbierto] = useState(false);
+  const [filtroEstado, setFiltroEstado] = useState("todos");
   const [rolNuevoUsuario, setRolNuevoUsuario] = useState(null);
   const [modalCrearPedidoAbierto, setModalCrearPedidoAbierto] = useState(false);
   const [modalMaquilaAbierto, setModalMaquilaAbierto] = useState(false);
@@ -871,6 +1301,8 @@ function SupervisorDashboard({ usuario, onLogout }) {
     const cerrarMenu = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuUsuarioAbierto(false);
+        setMenuCrearAbierto(false);
+        setBuscadorAbierto(false);
       }
     };
 
@@ -944,6 +1376,168 @@ function SupervisorDashboard({ usuario, onLogout }) {
       .slice(0, 5);
   }, [pedidos]);
 
+  const totalUnidades = useMemo(
+    () => pedidos.reduce((total, pedido) => total + Number(pedido.cantidad || 0), 0),
+    [pedidos]
+  );
+
+  const progresoPromedio = useMemo(() => {
+    if (pedidos.length === 0) return 0;
+
+    const suma = pedidos.reduce(
+      (total, pedido) => total + Number(pedido.progreso || 0),
+      0
+    );
+
+    return Math.round(suma / pedidos.length);
+  }, [pedidos]);
+
+  const maquilasActivas = useMemo(() => {
+    return new Set(
+      pedidos
+        .map((pedido) => pedido.maquila)
+        .filter((nombre) => nombre && nombre !== "Sin asignar")
+    ).size;
+  }, [pedidos]);
+
+  const datosTendencia = useMemo(
+    () => construirDatosTendencia(pedidos, intervalo),
+    [pedidos, intervalo]
+  );
+
+  const pedidosTabla = useMemo(() => {
+    const termino = busquedaGeneral.trim().toLowerCase();
+
+    return pedidos.filter((pedido) => {
+      const coincideBusqueda =
+        !termino ||
+        pedido.codigo.toLowerCase().includes(termino) ||
+        pedido.tipoPrenda.toLowerCase().includes(termino) ||
+        pedido.maquila.toLowerCase().includes(termino) ||
+        pedido.estado.toLowerCase().includes(termino);
+
+      const coincideEstado =
+        filtroEstado === "todos" || obtenerTipoEstado(pedido) === filtroEstado;
+
+      return coincideBusqueda && coincideEstado;
+    });
+  }, [pedidos, busquedaGeneral, filtroEstado]);
+
+  const pedidosRecientes = useMemo(
+    () => pedidosTabla.slice(0, 8),
+    [pedidosTabla]
+  );
+
+  const resultadosBusqueda = useMemo(() => {
+    const termino = busquedaGeneral.trim().toLowerCase();
+
+    if (!termino) return [];
+
+    return pedidos
+      .filter(
+        (pedido) =>
+          pedido.codigo.toLowerCase().includes(termino) ||
+          pedido.tipoPrenda.toLowerCase().includes(termino) ||
+          pedido.maquila.toLowerCase().includes(termino) ||
+          pedido.estado.toLowerCase().includes(termino)
+      )
+      .slice(0, 6);
+  }, [pedidos, busquedaGeneral]);
+
+  const alertasEntrega = useMemo(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    return pedidos
+      .filter(
+        (pedido) =>
+          pedido.fechaEntregaISO && obtenerTipoEstado(pedido) !== "finalizado"
+      )
+      .map((pedido) => {
+        const entrega = new Date(`${pedido.fechaEntregaISO}T00:00:00`);
+        const diferencia = Math.round(
+          (entrega.getTime() - hoy.getTime()) / 86400000
+        );
+
+        let tipo = "proxima";
+        let mensajeAlerta = `Entrega en ${diferencia} días`;
+
+        if (diferencia < 0) {
+          tipo = "vencida";
+          mensajeAlerta =
+            diferencia === -1
+              ? "La entrega venció ayer"
+              : `La entrega venció hace ${Math.abs(diferencia)} días`;
+        } else if (diferencia === 0) {
+          tipo = "hoy";
+          mensajeAlerta = "La entrega es hoy";
+        } else if (diferencia === 1) {
+          tipo = "manana";
+          mensajeAlerta = "La entrega es mañana";
+        }
+
+        return { ...pedido, diferencia, tipo, mensajeAlerta };
+      })
+      .filter((pedido) => pedido.diferencia <= 1)
+      .sort((a, b) => a.diferencia - b.diferencia);
+  }, [pedidos]);
+
+  const entregasManana = useMemo(
+    () => alertasEntrega.filter((pedido) => pedido.tipo === "manana"),
+    [alertasEntrega]
+  );
+
+  const calendarioActual = useMemo(() => {
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = hoy.getMonth();
+    const primerDia = new Date(anio, mes, 1).getDay();
+    const totalDias = new Date(anio, mes + 1, 0).getDate();
+    const manana = new Date(hoy);
+    manana.setDate(hoy.getDate() + 1);
+
+    const entregasPorDia = pedidos.reduce((resultado, pedido) => {
+      if (!pedido.fechaEntregaISO) return resultado;
+
+      const fecha = new Date(`${pedido.fechaEntregaISO}T00:00:00`);
+
+      if (
+        Number.isNaN(fecha.getTime()) ||
+        fecha.getFullYear() !== anio ||
+        fecha.getMonth() !== mes
+      ) {
+        return resultado;
+      }
+
+      const dia = fecha.getDate();
+      resultado[dia] = [...(resultado[dia] || []), pedido];
+      return resultado;
+    }, {});
+
+    const celdas = [
+      ...Array.from({ length: primerDia }, () => null),
+      ...Array.from({ length: totalDias }, (_, indice) => indice + 1),
+    ];
+
+    while (celdas.length % 7 !== 0 || celdas.length < 35) {
+      celdas.push(null);
+    }
+
+    return {
+      titulo: new Intl.DateTimeFormat("es-EC", {
+        month: "long",
+        year: "numeric",
+      }).format(hoy),
+      celdas,
+      hoy: hoy.getDate(),
+      manana:
+        manana.getFullYear() === anio && manana.getMonth() === mes
+          ? manana.getDate()
+          : null,
+      entregasPorDia,
+    };
+  }, [pedidos]);
+
   const pedidoSeleccionado = useMemo(
     () =>
       pedidos.find(
@@ -984,9 +1578,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
   const nombreRol =
     usuario?.rol ||
-    Number(usuario?.id_rol) === 1
-      ? "Supervisor"
-      : "Consulta";
+    (Number(usuario?.id_rol) === 1 ? "Supervisor" : "Consulta");
 
   const reiniciarEditar = useCallback(() => {
     setModalEditarAbierto(false);
@@ -1012,6 +1604,31 @@ function SupervisorDashboard({ usuario, onLogout }) {
     if (!eliminando) reiniciarEliminar();
   }, [eliminando, reiniciarEliminar]);
 
+
+  const abrirEditarPedido = (pedido = null) => {
+    setModalEditarAbierto(true);
+    setBusquedaEditar("");
+    setPedidoEditar(pedido);
+    setFormularioEditar(
+      pedido ? crearFormularioDesdePedido(pedido) : FORMULARIO_VACIO
+    );
+    setErrorEditar("");
+    setSidebarAbierto(false);
+  };
+
+  const abrirEliminarPedido = (pedido = null) => {
+    setModalEliminarAbierto(true);
+    setBusquedaEliminar("");
+    setPedidoEliminar(pedido);
+    setEtapaEliminar(pedido ? "confirmar" : "seleccionar");
+    setErrorEliminar("");
+    setSidebarAbierto(false);
+  };
+
+  const irASeccion = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setSidebarAbierto(false);
+  };
 
   const abrirCrearUsuario = (rol) => {
     setRolNuevoUsuario(rol);
@@ -1193,397 +1810,828 @@ function SupervisorDashboard({ usuario, onLogout }) {
   };
 
   return (
-    <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="dashboard-header-content">
-          <div className="dashboard-brand">
-            <img
-              src={logoMaquila}
-              alt="Maquila System EC"
-              className="dashboard-logo"
-            />
+    <div className={`enterprise-dashboard ${sidebarAbierto ? "sidebar-open" : ""}`}>
+      <button
+        type="button"
+        className="enterprise-sidebar-overlay"
+        onClick={() => setSidebarAbierto(false)}
+        aria-label="Cerrar menú lateral"
+      />
 
-            <div className="dashboard-brand-text">
-              <strong>Maquila System EC</strong>
-              <span>Control y seguimiento de producción</span>
+      <aside className="enterprise-sidebar">
+        <div className="enterprise-sidebar-brand">
+          <img src={logoMaquila} alt="Maquila System EC" />
+          <div>
+            <strong>Maquila System</strong>
+          </div>
+        </div>
+
+        <nav className="enterprise-sidebar-nav" aria-label="Menú principal">
+          <span className="enterprise-sidebar-label">PRINCIPAL</span>
+
+          <button
+            type="button"
+            className="enterprise-nav-item is-active"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              setSidebarAbierto(false);
+            }}
+          >
+            <Icono nombre="dashboard" />
+            <span>Panel General</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("pedidos-recientes")}
+          >
+            <Icono nombre="orders" />
+            <span>Pedidos</span>
+            <span className="enterprise-nav-count">{pedidos.length}</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("analitica-produccion")}
+          >
+            <Icono nombre="chart" />
+            <span>Seguimiento</span>
+          </button>
+
+          <span className="enterprise-sidebar-label">GESTIÓN</span>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => {
+              setModalCrearPedidoAbierto(true);
+              setSidebarAbierto(false);
+            }}
+          >
+            <Icono nombre="plus" />
+            <span>Crear pedido</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => abrirEditarPedido()}
+          >
+            <Icono nombre="edit" />
+            <span>Editar pedido</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => abrirEliminarPedido()}
+          >
+            <Icono nombre="trash" />
+            <span>Eliminar pedido</span>
+          </button>
+
+          {Number(usuario?.id_rol) === 1 && (
+            <>
+              <button
+                type="button"
+                className="enterprise-nav-item"
+                onClick={() => {
+                  setModalMaquilaAbierto(true);
+                  setSidebarAbierto(false);
+                }}
+              >
+                <Icono nombre="factory" />
+                <span>Maquilas</span>
+              </button>
+
+              <button
+                type="button"
+                className="enterprise-nav-item"
+                onClick={() => {
+                  abrirCrearUsuario(1);
+                  setSidebarAbierto(false);
+                }}
+              >
+                <Icono nombre="users" />
+                <span>Usuarios</span>
+              </button>
+            </>
+          )}
+        </nav>
+
+        <div className="enterprise-sidebar-support">
+          <div className="enterprise-support-icon">
+            <Icono nombre="layers" size={20} />
+          </div>
+          <div>
+            <strong>Sistema conectado</strong>
+            <span> Maquila System Funcionando </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="enterprise-sidebar-logout"
+          onClick={onLogout}
+        >
+          <Icono nombre="logout" />
+          <span>Cerrar sesión</span>
+        </button>
+      </aside>
+
+      <div className="enterprise-app-shell">
+        <header className="enterprise-topbar">
+          <div className="enterprise-topbar-left">
+            <button
+              type="button"
+              className="enterprise-mobile-menu"
+              onClick={() => setSidebarAbierto(true)}
+              aria-label="Abrir menú lateral"
+            >
+              <Icono nombre="menu" size={22} />
+            </button>
+
+            <div>
+              <span>Sistema de gestión y seguimiento de producción</span>
+              <h1>Panel de administración</h1>
             </div>
           </div>
 
-          <div className="dashboard-user-menu" ref={menuRef}>
-            <button
-              type="button"
-              className="dashboard-user-button"
-              onClick={() => setMenuUsuarioAbierto((actual) => !actual)}
-              aria-expanded={menuUsuarioAbierto}
-            >
-              <span className="dashboard-user-avatar">
-                {nombreUsuario.charAt(0).toUpperCase()}
-              </span>
+          <div className="enterprise-topbar-actions" ref={menuRef}>
+            <div className="enterprise-global-search">
+              <Icono nombre="search" size={18} />
+              <input
+                type="search"
+                value={busquedaGeneral}
+                onFocus={() => setBuscadorAbierto(true)}
+                onChange={(event) => {
+                  setBusquedaGeneral(event.target.value);
+                  setBuscadorAbierto(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && resultadosBusqueda[0]) {
+                    event.preventDefault();
+                    const pedido = resultadosBusqueda[0];
+                    setPedidoSeleccionadoId(pedido.id);
+                    setFiltroEstado("todos");
+                    setBuscadorAbierto(false);
+                    window.requestAnimationFrame(() =>
+                      irASeccion("pedidos-recientes")
+                    );
+                  }
+                }}
+                placeholder="Buscar pedido, prenda o maquila"
+                aria-label="Buscar pedidos"
+                autoComplete="off"
+              />
 
-              <span className="dashboard-user-information">
-                <strong>{nombreUsuario}</strong>
-                <small>{nombreRol}</small>
-              </span>
+              {busquedaGeneral && (
+                <button
+                  type="button"
+                  className="enterprise-search-clear"
+                  onClick={() => {
+                    setBusquedaGeneral("");
+                    setBuscadorAbierto(false);
+                  }}
+                  aria-label="Limpiar búsqueda"
+                >
+                  ×
+                </button>
+              )}
 
-              <span className="dashboard-chevron">
-                {menuUsuarioAbierto ? "▲" : "▼"}
-              </span>
-            </button>
+              {buscadorAbierto && busquedaGeneral.trim() && (
+                <div className="enterprise-search-results">
+                  {resultadosBusqueda.length === 0 ? (
+                    <div className="enterprise-search-empty">
+                      No se encontraron pedidos.
+                    </div>
+                  ) : (
+                    resultadosBusqueda.map((pedido) => (
+                      <button
+                        type="button"
+                        key={`buscar-${pedido.id}-${pedido.codigo}`}
+                        onClick={() => {
+                          setPedidoSeleccionadoId(pedido.id);
+                          setBusquedaGeneral(pedido.codigo);
+                          setFiltroEstado("todos");
+                          setBuscadorAbierto(false);
+                          window.requestAnimationFrame(() =>
+                            irASeccion("pedidos-recientes")
+                          );
+                        }}
+                      >
+                        <span className="enterprise-search-result-icon">
+                          <Icono nombre="package" size={16} />
+                        </span>
+                        <span>
+                          <strong>{pedido.codigo}</strong>
+                          <small>
+                            {pedido.tipoPrenda} · {pedido.maquila}
+                          </small>
+                        </span>
+                        <span className="enterprise-search-result-status">
+                          {pedido.estado}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
 
             {Number(usuario?.id_rol) === 1 && (
-              <div className="dashboard-create-container">
+              <div className="enterprise-create-wrapper">
                 <button
-                type="button"
-                className="dashboard-create-button"
-                onClick={() =>
-                  setMenuCrearAbierto((actual)=>!actual)
-                  }>
-                    +
+                  type="button"
+                  className="enterprise-new-button"
+                  onClick={() => setMenuCrearAbierto((actual) => !actual)}
+                  aria-expanded={menuCrearAbierto}
+                >
+                  <Icono nombre="plus" size={18} />
+                  <span>Nuevo</span>
+                </button>
+
+                {menuCrearAbierto && (
+                  <div className="enterprise-create-dropdown">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalCrearPedidoAbierto(true);
+                        setMenuCrearAbierto(false);
+                      }}
+                    >
+                      <Icono nombre="orders" size={18} />
+                      Nuevo pedido
                     </button>
-                    
-                    {menuCrearAbierto && (
-                      
-                      <div className="dashboard-create-menu">
-                        <button
-                        onClick={()=>{
-                          setModalMaquilaAbierto(true);
-                          setMenuCrearAbierto(false);
-                          }}
-                          >
-                            🏭 Crear Maquila
-                            </button>
-                            
-                            <button
-                            onClick={()=>{
-                              abrirCrearUsuario(1);
-                              setMenuCrearAbierto(false);
-                              }}
-                              >
-                                👤 Crear Usuario
-                                </button>
-                                    </div>
-                                  )}
-                                  </div>
-                                )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalMaquilaAbierto(true);
+                        setMenuCrearAbierto(false);
+                      }}
+                    >
+                      <Icono nombre="factory" size={18} />
+                      Nueva maquila
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        abrirCrearUsuario(1);
+                        setMenuCrearAbierto(false);
+                      }}
+                    >
+                      <Icono nombre="users" size={18} />
+                      Nuevo usuario
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {menuUsuarioAbierto && (
-              <div className="dashboard-dropdown">
-                <div className="dashboard-dropdown-user">
+            <button
+              type="button"
+              className="enterprise-icon-button"
+              onClick={() => irASeccion("calendario-notificaciones")}
+              aria-label={`Notificaciones de entrega: ${alertasEntrega.length}`}
+              title={`${alertasEntrega.length} notificación(es) de entrega`}
+            >
+              <Icono nombre="bell" size={20} />
+              {alertasEntrega.length > 0 && (
+                <span className="enterprise-notification-count">
+                  {alertasEntrega.length > 9 ? "9+" : alertasEntrega.length}
+                </span>
+              )}
+            </button>
+
+            <div className="enterprise-user-wrapper">
+              <button
+                type="button"
+                className="enterprise-user-button"
+                onClick={() => setMenuUsuarioAbierto((actual) => !actual)}
+                aria-expanded={menuUsuarioAbierto}
+              >
+                <span className="enterprise-user-avatar">
+                  {nombreUsuario.charAt(0).toUpperCase()}
+                </span>
+                <span className="enterprise-user-copy">
                   <strong>{nombreUsuario}</strong>
-                  <span>{usuario?.correo}</span>
-                </div>
+                  <small>{nombreRol}</small>
+                </span>
+                <Icono nombre="chevron" size={15} />
+              </button>
 
-                <div className="dashboard-dropdown-divider" />
+              {menuUsuarioAbierto && (
+                <div className="enterprise-user-dropdown">
+                  <div>
+                    <strong>{nombreUsuario}</strong>
+                    <span>{usuario?.correo || "Usuario del sistema"}</span>
+                  </div>
+                  <button type="button" onClick={onLogout}>
+                    <Icono nombre="logout" size={17} />
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main className="enterprise-main">
+          <section className="enterprise-welcome">
+            <div>
+              <span className="enterprise-eyebrow">RESUMEN GENERAL</span>
+              <h2>Bienvenido, {nombreUsuario.split(" ")[0]}</h2>
+              <p>
+                Revise la operación de pedidos, producción y fechas de entrega
+                desde un solo lugar.
+              </p>
+            </div>
+
+            <div className="enterprise-date-card">
+              <Icono nombre="calendar" size={20} />
+              <div>
+                <span>Fecha actual</span>
+                <strong>
+                  {new Intl.DateTimeFormat("es-EC", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  }).format(new Date())}
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          {error && (
+            <div className="dashboard-error enterprise-alert-message">
+              <Icono nombre="alert" size={19} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {mensaje && (
+            <div
+              className="dashboard-success enterprise-success-message"
+              role="status"
+            >
+              <Icono nombre="check" size={19} />
+              <span>{mensaje}</span>
+              <button
+                type="button"
+                onClick={() => setMensaje("")}
+                aria-label="Cerrar mensaje"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {entregasManana.length > 0 && (
+            <button
+              type="button"
+              className="enterprise-tomorrow-reminder"
+              onClick={() => irASeccion("calendario-notificaciones")}
+            >
+              <span className="enterprise-tomorrow-reminder-icon">
+                <Icono nombre="bell" size={20} />
+              </span>
+              <span>
+                <strong>Recordatorio de entrega</strong>
+                <small>
+                  {entregasManana.length === 1
+                    ? `El pedido ${entregasManana[0].codigo} debe entregarse mañana.`
+                    : `${entregasManana.length} pedidos deben entregarse mañana.`}
+                </small>
+              </span>
+              <Icono nombre="chevron" size={18} />
+            </button>
+          )}
+
+          <section className="enterprise-kpi-grid" aria-label="Indicadores principales">
+            <TarjetaKPI
+              titulo="Total de pedidos"
+              valor={cargando ? "..." : pedidos.length}
+              detalle={`${maquilasActivas} maquila(s) asignada(s)`}
+              icono="package"
+              tono="purple"
+              onClick={() => {
+                setFiltroEstado("todos");
+                irASeccion("pedidos-recientes");
+              }}
+            />
+            <TarjetaKPI
+              titulo="Pedidos activos"
+              valor={cargando ? "..." : estadisticas.activos}
+              detalle="Producción en curso"
+              icono="clock"
+              tono="blue"
+              onClick={() => abrirModalEstado("activo")}
+            />
+            <TarjetaKPI
+              titulo="Pedidos retrasados"
+              valor={cargando ? "..." : estadisticas.retrasados}
+              detalle="Requieren atención"
+              icono="alert"
+              tono="orange"
+              onClick={() => abrirModalEstado("retrasado")}
+            />
+            <TarjetaKPI
+              titulo="Pedidos finalizados"
+              valor={cargando ? "..." : estadisticas.finalizados}
+              detalle="Producción completada"
+              icono="check"
+              tono="green"
+              onClick={() => abrirModalEstado("finalizado")}
+            />
+            <TarjetaKPI
+              titulo="Unidades registradas"
+              valor={cargando ? "..." : totalUnidades.toLocaleString("es-EC")}
+              detalle="Suma total de prendas"
+              icono="layers"
+              tono="pink"
+            />
+            <TarjetaKPI
+              titulo="Avance promedio"
+              valor={cargando ? "..." : `${progresoPromedio}%`}
+              detalle="Cumplimiento general"
+              icono="chart"
+              tono="cyan"
+            />
+          </section>
+
+          <section
+            id="analitica-produccion"
+            className="enterprise-three-grid"
+          >
+            {/* ESTADO DE PEDIDOS */}
+            <article className="enterprise-chart-card enterprise-status-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>DISTRIBUCIÓN</span>
+                  <h3>Estado de pedidos</h3>
+                </div>
 
                 <button
                   type="button"
-                  className="dashboard-logout-button"
-                  onClick={onLogout}
+                  className="enterprise-card-menu"
+                  aria-label="Opciones"
                 >
-                  Cerrar sesión
+                  <Icono nombre="more" size={18} />
                 </button>
               </div>
-            )}
-          </div>
-        </div>
-      </header>
 
-      <main className="dashboard-main">
-        <section className="dashboard-welcome">
-          <div>
-            <span>Panel de control general</span>
-            <h1>Bienvenida, {nombreUsuario}</h1>
-            <p>Consulte el estado de pedidos, maquilas y fechas de entrega.</p>
-          </div>
+              <GraficoDonutEstados
+                activos={estadisticas.activos}
+                retrasados={estadisticas.retrasados}
+                finalizados={estadisticas.finalizados}
+              />
+            </article>
 
-          <div className="dashboard-date">
-            {new Intl.DateTimeFormat("es-EC", {
-              dateStyle: "full",
-            }).format(new Date())}
-          </div>
-        </section>
 
-        {error && <div className="dashboard-error">{error}</div>}
-
-        {mensaje && (
-          <div className="dashboard-success" role="status">
-            <span>{mensaje}</span>
-            <button type="button" onClick={() => setMensaje("")}>
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* RESUMEN: SE RETIRÓ TAREAS REGISTRADAS */}
-        <section className="dashboard-summary dashboard-summary-three">
-          <article
-          className="summary-card summary-active"
-          onClick={() => abrirModalEstado("activo")}
-          >
-            <div>
-              <span>Pedidos activos</span>
-              <strong>{cargando ? "..." : estadisticas.activos}</strong>
+            {/* PRODUCCIÓN POR MAQUILA */}
+            <article className="enterprise-chart-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>PRODUCCIÓN</span>
+                  <h3>Producción por Maquila</h3>
+                </div>
               </div>
-              <div className="summary-icon">↻</div>
-              </article>
-              
-              <article
-              className="summary-card summary-delayed"
-              onClick={() => abrirModalEstado("retrasado")}
-              >
 
-            <div>
-              <span>Pedidos retrasados</span>
-              <strong>{cargando ? "..." : estadisticas.retrasados}</strong>
-            </div>
-            <div className="summary-icon">!</div>
-          </article>
-          
-          <article
-          className="summary-card summary-finished"
-          onClick={() => abrirModalEstado("finalizado")}
-          >
-            <div>
-              <span>Pedidos finalizados</span>
-              <strong>{cargando ? "..." : estadisticas.finalizados}</strong>
-            </div>
-            <div className="summary-icon">✓</div>
-          </article>
-        </section>
+              <div className="enterprise-production-list">
 
-        <section className="dashboard-panel">
-          <div className="dashboard-panel-header">
-            <div>
-              <h2>Pedidos y seguimientos</h2>
-              <small>{pedidos.length} pedido(s) registrado(s)</small>
-            </div>
-
-            <button
-              type="button"
-              className="dashboard-refresh-button"
-              onClick={() => cargarInformacion(false)}
-              disabled={actualizando}
-            >
-              {actualizando ? "Actualizando..." : "Actualizar"}
-            </button>
-          </div>
-
-          <div className="dashboard-table-wrapper">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Pedido</th>
-                  <th>Prenda</th>
-                  <th>Maquila / taller</th>
-                  <th>Cantidad</th>
-                  <th>Estado</th>
-                  <th>Fecha de entrega</th>
-                  <th>Progreso</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {!cargando && pedidos.length === 0 && (
-                  <tr>
-                    <td colSpan="7" className="dashboard-empty">
-                      No existen pedidos registrados.
-                    </td>
-                  </tr>
+                {estadisticasMaquila.length === 0 && (
+                  <div className="enterprise-empty-state">
+                    No existen datos disponibles.
+                  </div>
                 )}
 
-                {pedidos.map((pedido) => {
-                  const tipoEstado = obtenerTipoEstado(pedido);
+                {estadisticasMaquila.slice(0,4).map((maquila)=>(
+                  <div
+                    className="enterprise-production-item"
+                    key={maquila.nombre}
+                  >
+                    <div className="enterprise-production-title">
+                      <span>{maquila.nombre}</span>
+                      <strong>{maquila.progreso}%</strong>
+                    </div>
 
-                  return (
-                    <tr
-                      key={`${pedido.id}-${pedido.codigo}`}
-                      className={
-                        pedidoSeleccionado &&
-                        pedidosCoinciden(pedido, pedidoSeleccionado)
-                          ? "is-selected"
-                          : ""
+                    <div className="enterprise-progress-track">
+                      <div
+                        className="enterprise-progress-value"
+                        style={{
+                          width:`${maquila.progreso}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+              </div>
+            </article>
+
+
+            {/* CALENDARIO Y NOTIFICACIONES */}
+            <article
+              id="calendario-notificaciones"
+              className="enterprise-chart-card enterprise-planning-card"
+            >
+              <div className="enterprise-card-header">
+                <div>
+                  <span>PLANIFICACIÓN</span>
+                  <h3>Calendario y notificaciones de entrega</h3>
+                </div>
+
+                <div className="enterprise-planning-badge">
+                  <Icono nombre="bell" size={16} />
+                  <span>{alertasEntrega.length}</span>
+                </div>
+              </div>
+
+              <div className="enterprise-planning-layout">
+                <div className="enterprise-calendar-simple">
+                  <div className="calendar-header">
+                    <strong>{calendarioActual.titulo}</strong>
+                  </div>
+
+                  <div className="calendar-days">
+                    {["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"].map(
+                      (dia) => (
+                        <span key={dia}>{dia}</span>
+                      )
+                    )}
+                  </div>
+
+                  <div className="calendar-grid">
+                    {calendarioActual.celdas.map((dia, indice) => {
+                      if (!dia) {
+                        return (
+                          <span
+                            key={`vacio-${indice}`}
+                            className="calendar-empty"
+                          />
+                        );
                       }
-                      onClick={() => setPedidoSeleccionadoId(pedido.id)}
-                    >
-                      <td>
-                        <strong>{pedido.codigo}</strong>
-                      </td>
-                      <td>{pedido.tipoPrenda}</td>
-                      <td>{pedido.maquila}</td>
-                      <td>{pedido.cantidad}</td>
-                      <td>
+
+                      const entregasDia =
+                        calendarioActual.entregasPorDia[dia] || [];
+                      const clases = [
+                        dia === calendarioActual.hoy ? "active-day" : "",
+                        entregasDia.length > 0 ? "delivery-day" : "",
+                        dia === calendarioActual.manana &&
+                        entregasDia.some(
+                          (pedido) => obtenerTipoEstado(pedido) !== "finalizado"
+                        )
+                          ? "delivery-tomorrow"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ");
+
+                      return (
                         <span
-                          className={`status-badge status-badge-${tipoEstado}`}
+                          key={`dia-${dia}`}
+                          className={clases}
+                          title={
+                            entregasDia.length
+                              ? entregasDia
+                                  .map((pedido) => pedido.codigo)
+                                  .join(", ")
+                              : undefined
+                          }
                         >
-                          {pedido.estado}
+                          {dia}
+                          {entregasDia.length > 0 && (
+                            <i>{entregasDia.length}</i>
+                          )}
                         </span>
-                      </td>
-                      <td>{pedido.fechaEntrega}</td>
-                      <td>
-                        <div className="progress-content">
-                          <div className="progress-track">
-                            <div
-                              className="progress-value"
-                              style={{ width: `${pedido.progreso}%` }}
-                            />
-                          </div>
-                          <span>{pedido.progreso}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="dashboard-grid">
-          <article className="dashboard-panel management-panel">
-            <div className="dashboard-panel-header">
-              <h2>Gestión de pedidos</h2>
-            </div>
-
-            <div className="management-actions">
-              <button
-                type="button"
-                onClick={() => setModalCrearPedidoAbierto(true)}
-              >
-                Crear nuevo pedido
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setModalEditarAbierto(true);
-                  setBusquedaEditar("");
-                  setPedidoEditar(null);
-                  setFormularioEditar(FORMULARIO_VACIO);
-                  setErrorEditar("");
-                }}
-              >
-                Editar pedido existente
-              </button>
-
-              <button
-                type="button"
-                className="management-delete-button"
-                onClick={() => {
-                  setModalEliminarAbierto(true);
-                  setBusquedaEliminar("");
-                  setPedidoEliminar(null);
-                  setEtapaEliminar("seleccionar");
-                  setErrorEliminar("");
-                }}
-              >
-                Eliminar pedido
-              </button>
-            </div>
-
-            <div className="technical-sheet">
-              <h3>Ficha técnica</h3>
-
-              {pedidoSeleccionado ? (
-                <dl>
-                  <div>
-                    <dt>Pedido</dt>
-                    <dd>{pedidoSeleccionado.codigo}</dd>
-                  </div>
-                  <div>
-                    <dt>Maquila</dt>
-                    <dd>{pedidoSeleccionado.maquila}</dd>
-                  </div>
-                  <div>
-                    <dt>Tipo de prenda</dt>
-                    <dd>{pedidoSeleccionado.tipoPrenda}</dd>
-                  </div>
-                  <div>
-                    <dt>Talla</dt>
-                    <dd>{pedidoSeleccionado.talla}</dd>
-                  </div>
-                  <div>
-                    <dt>Color</dt>
-                    <dd>{pedidoSeleccionado.color}</dd>
-                  </div>
-                  <div>
-                    <dt>Cantidad</dt>
-                    <dd>{pedidoSeleccionado.cantidad}</dd>
-                  </div>
-                  <div>
-                    <dt>Prioridad</dt>
-                    <dd>{pedidoSeleccionado.prioridad}</dd>
-                  </div>
-                  <div>
-                    <dt>Entrega</dt>
-                    <dd>{pedidoSeleccionado.fechaEntrega}</dd>
-                  </div>
-                </dl>
-              ) : (
-                <p>No hay información disponible.</p>
-              )}
-            </div>
-          </article>
-
-          <article className="dashboard-panel statistics-panel">
-            <div className="dashboard-panel-header">
-              <h2>Estadísticas</h2>
-            </div>
-
-            <fieldset className="statistics-filters">
-              <legend>Intervalo</legend>
-
-              {["diario", "semanal", "mensual"].map((opcion) => (
-                <label key={opcion}>
-                  <input
-                    type="radio"
-                    name="intervalo"
-                    value={opcion}
-                    checked={intervalo === opcion}
-                    onChange={(event) => setIntervalo(event.target.value)}
-                  />
-                  <span>
-                    {opcion.charAt(0).toUpperCase() + opcion.slice(1)}
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-
-            <div className="maquila-progress">
-              <h3>Cumplimiento por maquila</h3>
-
-              {estadisticasMaquila.length === 0 && (
-                <p className="dashboard-empty-message">
-                  No hay datos suficientes para calcular estadísticas.
-                </p>
-              )}
-
-              {estadisticasMaquila.map((maquila) => (
-                <div className="maquila-progress-item" key={maquila.nombre}>
-                  <div>
-                    <span>{maquila.nombre}</span>
-                    <strong>{maquila.progreso}%</strong>
+                      );
+                    })}
                   </div>
 
-                  <div className="progress-track">
-                    <div
-                      className="progress-value"
-                      style={{ width: `${maquila.progreso}%` }}
-                    />
+                  <div className="calendar-legend">
+                    <span>
+                      <i className="calendar-legend-today" /> Hoy
+                    </span>
+                    <span>
+                      <i className="calendar-legend-delivery" /> Entrega
+                    </span>
+                    <span>
+                      <i className="calendar-legend-tomorrow" /> Mañana
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </article>
-        </section>
-      </main>
 
-      <footer className="dashboard-footer">
-        <div>
-          <strong>Maquila System EC</strong>
-          <span>Sistema de gestión y seguimiento de producción</span>
-        </div>
-        <p>© 2026 Maquila System EC</p>
-      </footer>
+                <aside className="enterprise-delivery-alerts">
+                  <div className="enterprise-delivery-alerts-header">
+                    <div>
+                      <Icono nombre="bell" size={18} />
+                      <strong>Notificaciones</strong>
+                    </div>
+                    <span>{alertasEntrega.length}</span>
+                  </div>
+
+                  <div className="enterprise-delivery-alerts-list">
+                    {alertasEntrega.length === 0 ? (
+                      <div className="enterprise-delivery-alerts-empty">
+                        <Icono nombre="check" size={22} />
+                        <strong>Todo al día</strong>
+                        <span>
+                          No hay entregas para mañana ni pedidos vencidos.
+                        </span>
+                      </div>
+                    ) : (
+                      alertasEntrega.slice(0, 6).map((pedido) => (
+                        <button
+                          type="button"
+                          key={`alerta-${pedido.id}-${pedido.codigo}`}
+                          className={`enterprise-delivery-alert enterprise-delivery-alert-${pedido.tipo}`}
+                          onClick={() => {
+                            setPedidoSeleccionadoId(pedido.id);
+                            setBusquedaGeneral(pedido.codigo);
+                            setFiltroEstado("todos");
+                            window.requestAnimationFrame(() =>
+                              irASeccion("pedidos-recientes")
+                            );
+                          }}
+                        >
+                          <span className="enterprise-delivery-alert-icon">
+                            <Icono
+                              nombre={
+                                pedido.tipo === "vencida" ? "alert" : "clock"
+                              }
+                              size={17}
+                            />
+                          </span>
+                          <span>
+                            <strong>{pedido.codigo}</strong>
+                            <small>{pedido.mensajeAlerta}</small>
+                            <em>
+                              {pedido.tipoPrenda} · {pedido.fechaEntrega}
+                            </em>
+                          </span>
+                          <Icono nombre="chevron" size={15} />
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </aside>
+              </div>
+            </article>
+
+          </section>
+
+          <section
+            id="pedidos-recientes"
+            className="enterprise-card enterprise-orders-card"
+          >
+            <div className="enterprise-card-header enterprise-orders-header">
+              <div>
+                <span>OPERACIÓN RECIENTE</span>
+                <h3>Pedidos recientes</h3>
+                <small>
+                  Mostrando {pedidosRecientes.length} de {pedidosTabla.length} pedido(s)
+                </small>
+              </div>
+
+              <div className="enterprise-table-tools">
+                <select
+                  value={filtroEstado}
+                  onChange={(event) => setFiltroEstado(event.target.value)}
+                  aria-label="Filtrar pedidos por estado"
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="activo">Activos</option>
+                  <option value="retrasado">Retrasados</option>
+                  <option value="finalizado">Finalizados</option>
+                </select>
+
+                <button
+                  type="button"
+                  className="enterprise-refresh-button"
+                  onClick={() => cargarInformacion(false)}
+                  disabled={actualizando}
+                >
+                  <Icono nombre="refresh" size={17} />
+                  {actualizando ? "Actualizando" : "Actualizar"}
+                </button>
+              </div>
+            </div>
+
+            <div className="enterprise-table-wrapper">
+              <table className="enterprise-orders-table">
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Prenda</th>
+                    <th>Maquila</th>
+                    <th>Cantidad</th>
+                    <th>Estado</th>
+                    <th>Entrega</th>
+                    <th>Progreso</th>
+                    <th aria-label="Acciones" />
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {!cargando && pedidosRecientes.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="dashboard-empty">
+                        No se encontraron pedidos con los filtros seleccionados.
+                      </td>
+                    </tr>
+                  )}
+
+                  {pedidosRecientes.map((pedido) => {
+                    const tipoEstado = obtenerTipoEstado(pedido);
+                    const seleccionado =
+                      pedidoSeleccionado &&
+                      pedidosCoinciden(pedido, pedidoSeleccionado);
+
+                    return (
+                      <tr
+                        key={`${pedido.id}-${pedido.codigo}`}
+                        className={seleccionado ? "is-selected" : ""}
+                        onClick={() => setPedidoSeleccionadoId(pedido.id)}
+                      >
+                        <td>
+                          <div className="enterprise-order-code">
+                            <span>
+                              <Icono nombre="package" size={17} />
+                            </span>
+                            <div>
+                              <strong>{pedido.codigo}</strong>
+                              <small>Ingreso {pedido.fechaIngreso}</small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{pedido.tipoPrenda}</td>
+                        <td>{pedido.maquila}</td>
+                        <td>
+                          <strong>{pedido.cantidad}</strong>
+                        </td>
+                        <td>
+                          <span
+                            className={`status-badge status-badge-${tipoEstado}`}
+                          >
+                            {pedido.estado}
+                          </span>
+                        </td>
+                        <td>{pedido.fechaEntrega}</td>
+                        <td>
+                          <div className="enterprise-table-progress">
+                            <div className="enterprise-progress-track">
+                              <div
+                                className="enterprise-progress-value"
+                                style={{ width: `${pedido.progreso}%` }}
+                              />
+                            </div>
+                            <span>{pedido.progreso}%</span>
+                          </div>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="enterprise-row-action"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setPedidoSeleccionadoId(pedido.id);
+                              seleccionarPedidoEditar(pedido);
+                              setModalEditarAbierto(true);
+                            }}
+                            aria-label={`Editar pedido ${pedido.codigo}`}
+                          >
+                            <Icono nombre="edit" size={17} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="enterprise-table-footer">
+              <span>
+                Última actualización: {new Intl.DateTimeFormat("es-EC", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date())}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setFiltroEstado("todos");
+                  setBusquedaGeneral("");
+                }}
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
 
       <CrearPedidoModal
         abierto={modalCrearPedidoAbierto}
@@ -1592,40 +2640,32 @@ function SupervisorDashboard({ usuario, onLogout }) {
       />
 
       <CrearMaquilaModal
+        abierto={modalMaquilaAbierto}
+        onCerrar={() => setModalMaquilaAbierto(false)}
+        onMaquilaCreada={() => {
+          cargarInformacion(false);
+          setMensaje("Maquila creada correctamente.");
+        }}
+      />
 
-  abierto={modalMaquilaAbierto}
+      <UsuariosModal
+        abierto={modalUsuariosAbierto}
+        rolInicial={rolNuevoUsuario}
+        onCerrar={() => {
+          setModalUsuariosAbierto(false);
+          setRolNuevoUsuario(null);
+        }}
+      />
 
-  onCerrar={() => setModalMaquilaAbierto(false)}
-
-  onMaquilaCreada={()=>{
-    cargarInformacion(false);
-    setMensaje("Maquila creada correctamente");
-  }}
-
-/>
-
-
-<UsuariosModal
-
-  abierto={modalUsuariosAbierto}
-
-  rolInicial={rolNuevoUsuario}
-
-  onCerrar={() => {
-    setModalUsuariosAbierto(false);
-    setRolNuevoUsuario(null);
-  }}
-
-/>
-
-      {/* VENTANA PARA BUSCAR Y EDITAR PEDIDOS */}
       <ModalBase
         abierto={modalEditarAbierto}
         titulo="Editar pedido existente"
         onCerrar={cerrarEditar}
         ancho="grande"
       >
-        {errorEditar && <div className="dashboard-modal-error">{errorEditar}</div>}
+        {errorEditar && (
+          <div className="dashboard-modal-error">{errorEditar}</div>
+        )}
 
         <div className="dashboard-modal-columns">
           <BuscadorPedidos
@@ -1682,10 +2722,6 @@ function SupervisorDashboard({ usuario, onLogout }) {
         </div>
       </ModalBase>
 
-
-      {/* =========================================
-          VENTANA PARA ELIMINAR PEDIDOS
-      ========================================== */}
       <ModalBase
         abierto={modalEliminarAbierto}
         titulo="Eliminar pedido"
@@ -1785,9 +2821,6 @@ function SupervisorDashboard({ usuario, onLogout }) {
         )}
       </ModalBase>
 
-      {/* =========================================
-          MODAL DE ESTADOS DE PEDIDOS
-      ========================================== */}
       <ModalBase
         abierto={modalEstadoAbierto}
         titulo={tituloModalEstado[tipoEstadoModal] || "Pedidos por estado"}
@@ -1869,5 +2902,6 @@ function SupervisorDashboard({ usuario, onLogout }) {
     </div>
   );
 }
+
 
 export default SupervisorDashboard;
