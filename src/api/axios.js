@@ -5,38 +5,64 @@ const api = axios.create({
   timeout: 15000,
 });
 
+
 api.interceptors.request.use(
   (config) => {
+
     const token = localStorage.getItem("token");
 
+
     if (token) {
+
       config.headers =
         config.headers || {};
 
+
       config.headers.Authorization =
         `Bearer ${token}`;
+
     }
 
+
     return config;
+
   },
+
   (error) => {
+
     return Promise.reject(error);
+
   }
 );
 
+
+
 api.interceptors.response.use(
+
   (response) => response,
 
+
   (error) => {
+
+
     if (error.response?.status === 401) {
+
+
       console.error(
         "Error de autenticación:",
         error.response?.data
       );
+
+
     }
 
+
     return Promise.reject(error);
+
+
   }
+
 );
+
 
 export default api;

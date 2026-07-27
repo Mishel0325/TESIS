@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
 
+
+# =========================
+# IMPORTAR ROUTERS
+# =========================
+
 from app.routes.auth_routes import router as auth_router
 from app.routes.user_routes import router as user_router
 from app.routes.maquila_routes import router as maquila_router
@@ -24,47 +29,252 @@ from app.routes.informe_routes import router as informe_router
 from app.routes.seguimiento_routes import router as seguimiento_router
 
 
-app = FastAPI(
-    title="Maquila System API",
-    version="1.0.0",
-    description="Sistema integral de control de maquila"
-)
 
 # =========================
-# CORS (FRONTEND REACT)
+# CREAR API
 # =========================
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+
+app = FastAPI(
+
+    title="Maquila System API",
+
+    version="1.0.0",
+
+    description="Sistema integral de control de maquila"
+
 )
+
+
+
+# =========================
+# CORS FRONTEND REACT
+# =========================
+
+app.add_middleware(
+
+    CORSMiddleware,
+
+    allow_origins=[
+
+        "http://localhost:5173"
+
+    ],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+
+)
+
+
 
 # =========================
 # CREAR TABLAS
 # =========================
-Base.metadata.create_all(bind=engine)
+
+Base.metadata.create_all(
+    bind=engine
+)
+
+
 
 # =========================
-# ROUTERS
+# REGISTRO ROUTERS
 # =========================
-app.include_router(auth_router)
-app.include_router(user_router, prefix="/users", tags=["Users"])
-app.include_router(maquila_router, prefix="/maquilas", tags=["Maquilas"])
-app.include_router(pedido_router, prefix="/pedidos", tags=["Pedidos"])
-app.include_router(role_router, prefix="/roles", tags=["Roles"])
-app.include_router(permiso_router, prefix="/permisos", tags=["Permisos"])
-app.include_router(rol_permiso_router, prefix="/roles-permisos", tags=["Roles-Permisos"])
-app.include_router(insumo_router, prefix="/insumos", tags=["Insumos"])
-app.include_router(movimiento_router, prefix="/movimientos", tags=["Movimientos"])
-app.include_router(asignacion_router, prefix="/asignaciones", tags=["Asignaciones"])
-app.include_router(archivo_router, prefix="/archivos", tags=["Archivos"])
-app.include_router(control_calidad_router, prefix="/control-calidad", tags=["Control Calidad"])
-app.include_router(envio_insumo_router, prefix="/envio-insumos", tags=["Envío Insumos"])
-app.include_router(prenda_router)
-app.include_router(fase_router, prefix="/fases", tags=["Fases"])
-app.include_router(tarea_router, prefix="/tareas", tags=["Tareas"])
-app.include_router(historial_router, prefix="/historial", tags=["Historial"])
-app.include_router(informe_router, prefix="/informes", tags=["Informes"])
-app.include_router(seguimiento_router, prefix="/seguimiento", tags=["Seguimiento"])
+
+
+# Auth
+app.include_router(
+    auth_router
+)
+
+
+
+# Usuarios
+app.include_router(
+    seguimiento_router
+)
+
+# Maquilas
+app.include_router(
+    maquila_router,
+    prefix="/maquilas",
+    tags=["Maquilas"]
+)
+
+
+
+# Pedidos
+# Incluye:
+# POST   /pedidos/
+# GET    /pedidos/
+# GET    /pedidos/recientes
+# GET    /pedidos/buscar
+# PUT    /pedidos/{pedido_id}
+
+app.include_router(
+
+    pedido_router,
+
+    prefix="/pedidos",
+
+    tags=["Pedidos"]
+
+)
+
+
+
+# Roles
+app.include_router(
+    role_router,
+    prefix="/roles",
+    tags=["Roles"]
+)
+
+
+
+# Permisos
+app.include_router(
+    permiso_router,
+    prefix="/permisos",
+    tags=["Permisos"]
+)
+
+
+
+# Roles permisos
+app.include_router(
+    rol_permiso_router,
+    prefix="/roles-permisos",
+    tags=["Roles-Permisos"]
+)
+
+
+
+# Insumos
+app.include_router(
+    insumo_router,
+    prefix="/insumos",
+    tags=["Insumos"]
+)
+
+
+
+# Movimientos
+app.include_router(
+    movimiento_router,
+    prefix="/movimientos",
+    tags=["Movimientos"]
+)
+
+
+
+# Asignaciones
+app.include_router(
+    asignacion_router,
+    prefix="/asignaciones",
+    tags=["Asignaciones"]
+)
+
+
+
+# Archivos
+app.include_router(
+    archivo_router,
+    prefix="/archivos",
+    tags=["Archivos"]
+)
+
+
+
+# Control calidad
+app.include_router(
+    control_calidad_router,
+    prefix="/control-calidad",
+    tags=["Control Calidad"]
+)
+
+
+
+# Envío insumos
+app.include_router(
+    envio_insumo_router,
+    prefix="/envio-insumos",
+    tags=["Envío Insumos"]
+)
+
+
+
+# =========================
+# PRENDAS
+# IMPORTANTE:
+# prenda_routes.py YA TIENE:
+# prefix="/prendas"
+# =========================
+
+app.include_router(
+    prenda_router
+)
+
+
+
+# Fases
+app.include_router(
+    fase_router,
+    prefix="/fases",
+    tags=["Fases"]
+)
+
+
+
+# Tareas
+app.include_router(
+    tarea_router,
+    prefix="/tareas",
+    tags=["Tareas"]
+)
+
+
+
+# Historial
+app.include_router(
+    historial_router,
+    prefix="/historial",
+    tags=["Historial"]
+)
+
+
+
+# Informes
+app.include_router(
+    informe_router,
+    prefix="/informes",
+    tags=["Informes"]
+)
+
+
+
+# Seguimiento
+app.include_router(
+    seguimiento_router,
+    prefix="/seguimiento",
+    tags=["Seguimiento"]
+)
+
+
+
+# =========================
+# RUTA PRINCIPAL
+# =========================
+
+@app.get("/")
+def inicio():
+
+    return {
+
+        "mensaje":
+        "Maquila System API funcionando correctamente"
+
+    }

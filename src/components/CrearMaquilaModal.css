@@ -1,0 +1,118 @@
+.maquila-overlay{
+
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+
+}
+
+
+
+.maquila-modal{
+
+background:white;
+width:420px;
+border-radius:15px;
+padding:25px;
+box-shadow:0 10px 30px rgba(0,0,0,.3);
+
+}
+
+
+
+.maquila-modal header{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+}
+
+
+
+.maquila-modal header h2{
+
+color:#174a7c;
+
+}
+
+
+
+.maquila-modal header button{
+
+border:none;
+background:none;
+font-size:25px;
+cursor:pointer;
+
+}
+
+
+
+.maquila-modal label{
+
+display:flex;
+flex-direction:column;
+gap:7px;
+margin-top:15px;
+font-weight:bold;
+
+}
+
+
+
+.maquila-modal input,
+.maquila-modal select{
+
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+
+}
+
+
+
+.maquila-actions{
+
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:25px;
+
+}
+
+
+
+.maquila-actions button{
+
+padding:10px 20px;
+border-radius:8px;
+border:none;
+cursor:pointer;
+
+}
+
+
+
+.maquila-actions button:last-child{
+
+background:#1769aa;
+color:white;
+
+}
+
+
+
+.maquila-error{
+
+background:#ffe1e1;
+color:#9b0000;
+padding:10px;
+border-radius:8px;
+margin-top:15px;
+
+}

@@ -5,7 +5,9 @@ from app.database import Base
 
 
 class Pedido(Base):
+
     __tablename__ = "pedidos"
+
 
     id_pedido = Column(
         Integer,
@@ -13,15 +15,18 @@ class Pedido(Base):
         index=True
     )
 
+
     id_maquila = Column(
         Integer,
         nullable=False
     )
 
+
     id_usuario = Column(
         Integer,
         nullable=False
     )
+
 
     codigo_pedido = Column(
         String(50),
@@ -29,35 +34,42 @@ class Pedido(Base):
         nullable=False
     )
 
+
     tipo_prenda = Column(
         String(100),
         nullable=False
     )
+
 
     talla = Column(
         String(50),
         nullable=False
     )
 
+
     color = Column(
         String(50),
         nullable=False
     )
+
 
     cantidad = Column(
         Integer,
         nullable=False
     )
 
+
     fecha_ingreso = Column(
         Date,
         nullable=False
     )
 
+
     fecha_entrega = Column(
         Date,
         nullable=False
     )
+
 
     prioridad = Column(
         Enum(
@@ -69,6 +81,7 @@ class Pedido(Base):
         default="Media",
         nullable=False
     )
+
 
     estado = Column(
         Enum(
@@ -83,10 +96,20 @@ class Pedido(Base):
         nullable=False
     )
 
+
+    # Porcentaje de avance del pedido
+    progreso = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
+
+
     observaciones = Column(
         Text,
         nullable=True
     )
+
 
     fecha_creacion = Column(
         DateTime,
