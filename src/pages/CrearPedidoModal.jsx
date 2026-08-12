@@ -3,6 +3,7 @@ import api from "../api/axios";
 import "./CrearPedidoModal.css";
 
 const PEDIDOS_ENDPOINT = "/pedidos/";
+const MAQUILAS_ENDPOINT = "/maquilas/";
 
 const obtenerFechaActual = () => {
   const ahora = new Date();
@@ -49,6 +50,8 @@ function CrearPedidoModal({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [maquilas, setMaquilas] = useState([]);
+  const [cargandoMaquilas, setCargandoMaquilas] = useState(false);
 
   useEffect(() => {
     if (abierto) {
@@ -56,8 +59,33 @@ function CrearPedidoModal({
       setError("");
       setMensaje("");
       setGuardando(false);
+      cargarMaquilas();
     }
   }, [abierto]);
+
+  const cargarMaquilas = async () => {
+    setCargandoMaquilas(true);
+    try {
+      const response = await api.get(MAQUILAS_ENDPOINT);
+      const data = response?.data;
+      if (Array.isArray(data)) {
+        setMaquilas(data);
+      } else if (Array.isArray(data?.items)) {
+        setMaquilas(data.items);
+      } else if (Array.isArray(data?.data)) {
+        setMaquilas(data.data);
+      } else if (Array.isArray(data?.results)) {
+        setMaquilas(data.results);
+      } else {
+        setMaquilas([]);
+      }
+    } catch (err) {
+      console.error("Error cargando maquilas:", err);
+      setMaquilas([]);
+    } finally {
+      setCargandoMaquilas(false);
+    }
+  };
 
   useEffect(() => {
     const cerrarConEscape = (event) => {
@@ -160,11 +188,11 @@ function CrearPedidoModal({
 
   const validarFormulario = () => {
     if (!formulario.id_maquila) {
-      return "Ingrese el identificador de la maquila.";
+      return "Seleccione el taller que hará el pedido.";
     }
 
     if (Number(formulario.id_maquila) <= 0) {
-      return "El identificador de la maquila debe ser mayor que cero.";
+      return "Seleccione un taller válido.";
     }
 
     if (!formulario.codigo_pedido.trim()) {
@@ -338,6 +366,9 @@ function CrearPedidoModal({
             <h2 id="titulo-crear-pedido">
               Crear nuevo pedido
             </h2>
+            <p className="pedido-modal-description">
+              Complete los datos del pedido y seleccione uno de los talleres disponibles.
+            </p>
           </div>
 
           <button
@@ -377,21 +408,37 @@ function CrearPedidoModal({
           <div className="pedido-form-grid">
             <div className="pedido-field">
               <label htmlFor="id_maquila">
-                ID de maquila
+                Taller disponible
               </label>
 
-              <input
+              <select
                 id="id_maquila"
                 name="id_maquila"
-                type="number"
-                min="1"
-                step="1"
                 value={formulario.id_maquila}
                 onChange={manejarCambio}
-                placeholder="Ejemplo: 1"
-                disabled={guardando}
+                disabled={guardando || cargandoMaquilas}
                 required
-              />
+              >
+                <option value="">
+                  {cargandoMaquilas
+                    ? "Cargando talleres..."
+                    : "Seleccione un taller"}
+                </option>
+                {maquilas.length === 0 && !cargandoMaquilas ? (
+                  <option value="" disabled>
+                    No hay talleres disponibles
+                  </option>
+                ) : (
+                  maquilas.map((taller) => (
+                    <option
+                      key={taller.id_maquila}
+                      value={String(taller.id_maquila)}
+                    >
+                      {taller.nombre}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
 
             <div className="pedido-field">

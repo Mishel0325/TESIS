@@ -10,8 +10,11 @@ import api from "../api/axios";
 import logoMaquila from "../assets/logo-maquila.png";
 import CrearPedidoModal from "./CrearPedidoModal";
 import "./SupervisorDashboard.css";
+
+// Rediseño visual 2026: conserva la lógica/API existente y cambia únicamente la presentación.
 import CrearMaquilaModal from "../components/CrearMaquilaModal";
 import UsuariosModal from "../components/UsuariosModal";
+import Prendas from "./Prendas";
 /*
  * IMPORTANTE:
  * La primera ruta debe ser la ruta real de tu backend.
@@ -20,6 +23,14 @@ import UsuariosModal from "../components/UsuariosModal";
 const ENDPOINTS = {
   pedidos: ["/pedidos/"],
   seguimientos: ["/seguimiento/", "/seguimientos/"],
+  insumos: ["/insumos/"],
+  maquilas: ["/maquilas/"],
+  controlCalidad: ["/control_calidad/"],
+  archivos: ["/archivos/"],
+  informes: ["/informes/"],
+  fases: ["/fases/"],
+  tareas: ["/tareas/"],
+  prendas: ["/prendas/"],
 };
 
 const FORMULARIO_VACIO = {
@@ -139,6 +150,29 @@ function obtenerTexto(valor, valorAlternativo = "") {
   }
 
   return String(valor).trim() || valorAlternativo;
+}
+
+function obtenerTextoInsumo(insumo, campos, valorAlternativo = "Sin datos") {
+  for (const campo of campos) {
+    const valor = insumo?.[campo];
+    if (valor !== null && valor !== undefined && String(valor).trim()) {
+      return String(valor).trim();
+    }
+  }
+
+  return valorAlternativo;
+}
+
+function obtenerStockInsumo(insumo) {
+  return Number(
+    insumo.stock_actual ?? insumo.stock ?? insumo.cantidad ?? insumo.cantidad_actual ?? 0
+  );
+}
+
+function obtenerStockMinimoInsumo(insumo) {
+  return Number(
+    insumo.stock_minimo ?? insumo.minimo ?? insumo.stock_min ?? insumo.stock_minimo_actual ?? 0
+  );
 }
 
 function obtenerObjetoPedido(item) {
@@ -925,6 +959,22 @@ function Icono({ nombre, size = 20, className = "" }) {
           <path d="M16 3v4M8 3v4M3 10h18" />
         </svg>
       );
+    case "folder":
+      return (
+        <svg {...propiedades}>
+          <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+        </svg>
+      );
+    case "tasks":
+      return (
+        <svg {...propiedades}>
+          <path d="M4 7h4M4 12h4M4 17h4" />
+          <path d="M11 7h9M11 12h9M11 17h9" />
+          <path d="M9 6 7 8 5 6" />
+          <path d="M9 11 7 13 5 11" />
+          <path d="M9 16 7 18 5 16" />
+        </svg>
+      );
     case "more":
       return (
         <svg {...propiedades}>
@@ -981,9 +1031,9 @@ function GraficoDonutEstados({ activos, retrasados, finalizados }) {
 
   const fondo = total
     ? `conic-gradient(
-        #5f67e8 0% ${limiteActivos}%,
-        #f5a524 ${limiteActivos}% ${limiteRetrasados}%,
-        #25b77a ${limiteRetrasados}% 100%
+        #1677ff 0% ${limiteActivos}%,
+        #f59e0b ${limiteActivos}% ${limiteRetrasados}%,
+        #22a559 ${limiteRetrasados}% 100%
       )`
     : "conic-gradient(#e8ebf2 0% 100%)";
 
@@ -1200,6 +1250,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [busquedaGeneral, setBusquedaGeneral] = useState("");
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
+  const [busquedaInsumos, setBusquedaInsumos] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [rolNuevoUsuario, setRolNuevoUsuario] = useState(null);
   const [modalCrearPedidoAbierto, setModalCrearPedidoAbierto] = useState(false);
@@ -1220,6 +1271,14 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
   const [pedidosBackend, setPedidosBackend] = useState([]);
   const [seguimientos, setSeguimientos] = useState([]);
+  const [insumosBackend, setInsumosBackend] = useState([]);
+  const [maquilasBackend, setMaquilasBackend] = useState([]);
+  const [controlCalidadBackend, setControlCalidadBackend] = useState([]);
+  const [archivosBackend, setArchivosBackend] = useState([]);
+  const [informesBackend, setInformesBackend] = useState([]);
+  const [fasesBackend, setFasesBackend] = useState([]);
+  const [tareasBackend, setTareasBackend] = useState([]);
+  const [prendasBackend, setPrendasBackend] = useState([]);
   const [intervalo, setIntervalo] = useState("mensual");
 
   const [pedidoSeleccionadoId, setPedidoSeleccionadoId] = useState(null);
@@ -1250,9 +1309,28 @@ function SupervisorDashboard({ usuario, onLogout }) {
     setError("");
 
     try {
-      const [resultadoPedidos, resultadoSeguimientos] = await Promise.allSettled([
+      const [
+        resultadoPedidos,
+        resultadoSeguimientos,
+        resultadoInsumos,
+        resultadoMaquilas,
+        resultadoControlCalidad,
+        resultadoArchivos,
+        resultadoInformes,
+        resultadoFases,
+        resultadoTareas,
+        resultadoPrendas,
+      ] = await Promise.allSettled([
         consultarPrimeraRutaDisponible(ENDPOINTS.pedidos),
         consultarPrimeraRutaDisponible(ENDPOINTS.seguimientos),
+        consultarPrimeraRutaDisponible(ENDPOINTS.insumos),
+        consultarPrimeraRutaDisponible(ENDPOINTS.maquilas),
+        consultarPrimeraRutaDisponible(ENDPOINTS.controlCalidad),
+        consultarPrimeraRutaDisponible(ENDPOINTS.archivos),
+        consultarPrimeraRutaDisponible(ENDPOINTS.informes),
+        consultarPrimeraRutaDisponible(ENDPOINTS.fases),
+        consultarPrimeraRutaDisponible(ENDPOINTS.tareas),
+        consultarPrimeraRutaDisponible(ENDPOINTS.prendas),
       ]);
 
       if (resultadoPedidos.status === "fulfilled") {
@@ -1269,6 +1347,54 @@ function SupervisorDashboard({ usuario, onLogout }) {
          * Por eso un error 404 en seguimiento no bloquea el dashboard.
          */
         setSeguimientos([]);
+      }
+
+      if (resultadoInsumos.status === "fulfilled") {
+        setInsumosBackend(extraerLista(resultadoInsumos.value));
+      } else {
+        setInsumosBackend([]);
+      }
+
+      if (resultadoMaquilas.status === "fulfilled") {
+        setMaquilasBackend(extraerLista(resultadoMaquilas.value));
+      } else {
+        setMaquilasBackend([]);
+      }
+
+      if (resultadoControlCalidad.status === "fulfilled") {
+        setControlCalidadBackend(extraerLista(resultadoControlCalidad.value));
+      } else {
+        setControlCalidadBackend([]);
+      }
+
+      if (resultadoArchivos.status === "fulfilled") {
+        setArchivosBackend(extraerLista(resultadoArchivos.value));
+      } else {
+        setArchivosBackend([]);
+      }
+
+      if (resultadoInformes.status === "fulfilled") {
+        setInformesBackend(extraerLista(resultadoInformes.value));
+      } else {
+        setInformesBackend([]);
+      }
+
+      if (resultadoFases.status === "fulfilled") {
+        setFasesBackend(extraerLista(resultadoFases.value));
+      } else {
+        setFasesBackend([]);
+      }
+
+      if (resultadoTareas.status === "fulfilled") {
+        setTareasBackend(extraerLista(resultadoTareas.value));
+      } else {
+        setTareasBackend([]);
+      }
+
+      if (resultadoPrendas.status === "fulfilled") {
+        setPrendasBackend(extraerLista(resultadoPrendas.value));
+      } else {
+        setPrendasBackend([]);
       }
     } catch (err) {
       console.error("Error al cargar pedidos:", err);
@@ -1399,6 +1525,85 @@ function SupervisorDashboard({ usuario, onLogout }) {
         .filter((nombre) => nombre && nombre !== "Sin asignar")
     ).size;
   }, [pedidos]);
+
+  const inventarioResumido = useMemo(() => {
+    const totalStock = insumosBackend.reduce(
+      (total, insumo) => total + obtenerStockInsumo(insumo),
+      0
+    );
+
+    const bajos = insumosBackend.filter(
+      (insumo) =>
+        obtenerStockInsumo(insumo) <= obtenerStockMinimoInsumo(insumo)
+    ).length;
+
+    return {
+      totalStock,
+      totalInsumos: insumosBackend.length,
+      insumosCriticos: bajos,
+    };
+  }, [insumosBackend]);
+
+  const insumosCriticosDetalle = useMemo(() => {
+    return insumosBackend
+      .map((insumo) => ({
+        codigo: obtenerTextoInsumo(insumo, ["codigo", "codigo_insumo", "codigo_pedido"], "Sin código"),
+        nombre: obtenerTextoInsumo(insumo, ["nombre", "nombre_insumo", "descripcion", "descripcion_insumo"], "Sin nombre"),
+        categoria: obtenerTextoInsumo(insumo, ["categoria", "tipo", "grupo"], "Sin categoría"),
+        unidadMedida: obtenerTextoInsumo(insumo, ["unidad_medida", "unidad", "u_medida"], "und"),
+        stockActual: obtenerStockInsumo(insumo),
+        stockMinimo: obtenerStockMinimoInsumo(insumo),
+        estado: obtenerTextoInsumo(insumo, ["estado", "status", "condicion"], "Sin estado"),
+      }))
+      .sort((a, b) => a.stockActual - b.stockActual)
+      .slice(0, 8);
+  }, [insumosBackend]);
+
+  const insumosFiltrados = useMemo(() => {
+    const termino = busquedaInsumos.trim().toLowerCase();
+    if (!termino) return insumosCriticosDetalle;
+
+    return insumosCriticosDetalle.filter((insumo) =>
+      insumo.codigo.toLowerCase().includes(termino) ||
+      insumo.nombre.toLowerCase().includes(termino) ||
+      insumo.categoria.toLowerCase().includes(termino)
+    );
+  }, [insumosCriticosDetalle, busquedaInsumos]);
+
+  const maquilasDisponibles = useMemo(
+    () => maquilasBackend.length,
+    [maquilasBackend]
+  );
+
+  const totalPrendas = useMemo(
+    () => prendasBackend.length,
+    [prendasBackend]
+  );
+
+  const totalFases = useMemo(
+    () => fasesBackend.length,
+    [fasesBackend]
+  );
+
+  const totalTareas = useMemo(
+    () => tareasBackend.length,
+    [tareasBackend]
+  );
+
+  const totalControlCalidad = useMemo(
+    () => controlCalidadBackend.length,
+    [controlCalidadBackend]
+  );
+
+  const totalInformes = useMemo(
+    () => informesBackend.length,
+    [informesBackend]
+  );
+
+  const totalArchivos = useMemo(
+    () => archivosBackend.length,
+    [archivosBackend]
+  );
 
   const datosTendencia = useMemo(
     () => construirDatosTendencia(pedidos, intervalo),
@@ -1822,7 +2027,8 @@ function SupervisorDashboard({ usuario, onLogout }) {
         <div className="enterprise-sidebar-brand">
           <img src={logoMaquila} alt="Maquila System EC" />
           <div>
-            <strong>Maquila System</strong>
+            <strong>Maquila System EC</strong>
+            <span>Control y seguimiento de producción</span>
           </div>
         </div>
 
@@ -1919,6 +2125,62 @@ function SupervisorDashboard({ usuario, onLogout }) {
               </button>
             </>
           )}
+
+          <span className="enterprise-sidebar-label">OPERACIÓN</span>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("seccion-prendas")}
+          >
+            <Icono nombre="package" />
+            <span>Prendas</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("seccion-fases-tareas")}
+          >
+            <Icono nombre="tasks" />
+            <span>Fases y Tareas</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("seccion-insumos")}
+          >
+            <Icono nombre="layers" />
+            <span>Insumos</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("seccion-control-calidad")}
+          >
+            <Icono nombre="check" />
+            <span>Control de calidad</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("seccion-informes")}
+          >
+            <Icono nombre="chart" />
+            <span>Informes</span>
+          </button>
+
+          <button
+            type="button"
+            className="enterprise-nav-item"
+            onClick={() => irASeccion("seccion-archivos")}
+          >
+            <Icono nombre="folder" />
+            <span>Archivos</span>
+          </button>
         </nav>
 
         <div className="enterprise-sidebar-support">
@@ -2142,7 +2404,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
           <section className="enterprise-welcome">
             <div>
               <span className="enterprise-eyebrow">RESUMEN GENERAL</span>
-              <h2>Bienvenido, {nombreUsuario.split(" ")[0]}</h2>
+              <h2>¡Bienvenido, {nombreUsuario.split(" ")[0]}!</h2>
               <p>
                 Revise la operación de pedidos, producción y fechas de entrega
                 desde un solo lugar.
@@ -2208,80 +2470,64 @@ function SupervisorDashboard({ usuario, onLogout }) {
               <Icono nombre="chevron" size={18} />
             </button>
           )}
-
           <section className="enterprise-kpi-grid" aria-label="Indicadores principales">
             <TarjetaKPI
-              titulo="Total de pedidos"
-              valor={cargando ? "..." : pedidos.length}
-              detalle={`${maquilasActivas} maquila(s) asignada(s)`}
-              icono="package"
-              tono="purple"
-              onClick={() => {
-                setFiltroEstado("todos");
-                irASeccion("pedidos-recientes");
-              }}
-            />
-            <TarjetaKPI
-              titulo="Pedidos activos"
+              titulo="Pedidos Activos"
               valor={cargando ? "..." : estadisticas.activos}
-              detalle="Producción en curso"
-              icono="clock"
+              detalle="En producción"
+              icono="orders"
               tono="blue"
-              onClick={() => abrirModalEstado("activo")}
+              onClick={() => irASeccion("pedidos-recientes")}
             />
             <TarjetaKPI
-              titulo="Pedidos retrasados"
+              titulo="Pedidos Retrasados"
               valor={cargando ? "..." : estadisticas.retrasados}
               detalle="Requieren atención"
-              icono="alert"
+              icono="clock"
               tono="orange"
-              onClick={() => abrirModalEstado("retrasado")}
+              onClick={() => irASeccion("pedidos-recientes")}
             />
             <TarjetaKPI
-              titulo="Pedidos finalizados"
+              titulo="Pedidos Finalizados"
               valor={cargando ? "..." : estadisticas.finalizados}
-              detalle="Producción completada"
+              detalle="Este período"
               icono="check"
               tono="green"
-              onClick={() => abrirModalEstado("finalizado")}
+              onClick={() => irASeccion("pedidos-recientes")}
             />
             <TarjetaKPI
-              titulo="Unidades registradas"
-              valor={cargando ? "..." : totalUnidades.toLocaleString("es-EC")}
-              detalle="Suma total de prendas"
-              icono="layers"
-              tono="pink"
+              titulo="Maquilas Activas"
+              valor={cargando ? "..." : maquilasDisponibles}
+              detalle="Registradas"
+              icono="factory"
+              tono="purple"
             />
             <TarjetaKPI
-              titulo="Avance promedio"
-              valor={cargando ? "..." : `${progresoPromedio}%`}
-              detalle="Cumplimiento general"
-              icono="chart"
-              tono="cyan"
+              titulo="Tareas Pendientes"
+              valor={cargando ? "..." : totalTareas}
+              detalle="Por completar"
+              icono="tasks"
+              tono="yellow"
+              onClick={() => irASeccion("seccion-fases-tareas")}
+            />
+            <TarjetaKPI
+              titulo="Insumos Críticos"
+              valor={cargando ? "..." : inventarioResumido.insumosCriticos}
+              detalle="Stock bajo"
+              icono="alert"
+              tono="red"
+              onClick={() => irASeccion("seccion-insumos")}
             />
           </section>
 
-          <section
-            id="analitica-produccion"
-            className="enterprise-three-grid"
-          >
-            {/* ESTADO DE PEDIDOS */}
-            <article className="enterprise-chart-card enterprise-status-card">
+          <section className="enterprise-dashboard-summary" aria-label="Resumen de producción y disponibilidad">
+            <article className="enterprise-card enterprise-status-card">
               <div className="enterprise-card-header">
                 <div>
-                  <span>DISTRIBUCIÓN</span>
+                  <span>ESTADO</span>
                   <h3>Estado de pedidos</h3>
                 </div>
-
-                <button
-                  type="button"
-                  className="enterprise-card-menu"
-                  aria-label="Opciones"
-                >
-                  <Icono nombre="more" size={18} />
-                </button>
               </div>
-
               <GraficoDonutEstados
                 activos={estadisticas.activos}
                 retrasados={estadisticas.retrasados}
@@ -2289,345 +2535,539 @@ function SupervisorDashboard({ usuario, onLogout }) {
               />
             </article>
 
-
-            {/* PRODUCCIÓN POR MAQUILA */}
-            <article className="enterprise-chart-card">
+            <article className="enterprise-card">
               <div className="enterprise-card-header">
                 <div>
                   <span>PRODUCCIÓN</span>
-                  <h3>Producción por Maquila</h3>
+                  <h3>Producción por maquila</h3>
                 </div>
               </div>
-
               <div className="enterprise-production-list">
-
-                {estadisticasMaquila.length === 0 && (
+                {estadisticasMaquila.length === 0 ? (
                   <div className="enterprise-empty-state">
                     No existen datos disponibles.
                   </div>
+                ) : (
+                  estadisticasMaquila.slice(0, 4).map((maquila) => (
+                    <div className="enterprise-production-item" key={maquila.nombre}>
+                      <div className="enterprise-production-title">
+                        <span>{maquila.nombre}</span>
+                        <strong>{maquila.progreso}%</strong>
+                      </div>
+                      <div className="enterprise-progress-track">
+                        <div
+                          className="enterprise-progress-value"
+                          style={{ width: `${maquila.progreso}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
                 )}
-
-                {estadisticasMaquila.slice(0,4).map((maquila)=>(
-                  <div
-                    className="enterprise-production-item"
-                    key={maquila.nombre}
-                  >
-                    <div className="enterprise-production-title">
-                      <span>{maquila.nombre}</span>
-                      <strong>{maquila.progreso}%</strong>
-                    </div>
-
-                    <div className="enterprise-progress-track">
-                      <div
-                        className="enterprise-progress-value"
-                        style={{
-                          width:`${maquila.progreso}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-
               </div>
             </article>
 
-
-            {/* CALENDARIO Y NOTIFICACIONES */}
-            <article
-              id="calendario-notificaciones"
-              className="enterprise-chart-card enterprise-planning-card"
-            >
+            <article className="enterprise-card enterprise-inventory-card">
               <div className="enterprise-card-header">
                 <div>
-                  <span>PLANIFICACIÓN</span>
-                  <h3>Calendario y notificaciones de entrega</h3>
-                </div>
-
-                <div className="enterprise-planning-badge">
-                  <Icono nombre="bell" size={16} />
-                  <span>{alertasEntrega.length}</span>
+                  <span>MAQUILA</span>
+                  <h3>Capacidad disponible</h3>
                 </div>
               </div>
-
-              <div className="enterprise-planning-layout">
-                <div className="enterprise-calendar-simple">
-                  <div className="calendar-header">
-                    <strong>{calendarioActual.titulo}</strong>
+              <div className="enterprise-inventory-summary">
+                <div className="enterprise-inventory-header">
+                  <div>
+                    <strong>{cargando ? "..." : maquilasDisponibles}</strong>
+                    <span>Maquilas disponibles</span>
                   </div>
-
-                  <div className="calendar-days">
-                    {["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"].map(
-                      (dia) => (
-                        <span key={dia}>{dia}</span>
-                      )
-                    )}
-                  </div>
-
-                  <div className="calendar-grid">
-                    {calendarioActual.celdas.map((dia, indice) => {
-                      if (!dia) {
-                        return (
-                          <span
-                            key={`vacio-${indice}`}
-                            className="calendar-empty"
-                          />
-                        );
-                      }
-
-                      const entregasDia =
-                        calendarioActual.entregasPorDia[dia] || [];
-                      const clases = [
-                        dia === calendarioActual.hoy ? "active-day" : "",
-                        entregasDia.length > 0 ? "delivery-day" : "",
-                        dia === calendarioActual.manana &&
-                        entregasDia.some(
-                          (pedido) => obtenerTipoEstado(pedido) !== "finalizado"
-                        )
-                          ? "delivery-tomorrow"
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ");
-
-                      return (
-                        <span
-                          key={`dia-${dia}`}
-                          className={clases}
-                          title={
-                            entregasDia.length
-                              ? entregasDia
-                                  .map((pedido) => pedido.codigo)
-                                  .join(", ")
-                              : undefined
-                          }
-                        >
-                          {dia}
-                          {entregasDia.length > 0 && (
-                            <i>{entregasDia.length}</i>
-                          )}
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  <div className="calendar-legend">
-                    <span>
-                      <i className="calendar-legend-today" /> Hoy
-                    </span>
-                    <span>
-                      <i className="calendar-legend-delivery" /> Entrega
-                    </span>
-                    <span>
-                      <i className="calendar-legend-tomorrow" /> Mañana
-                    </span>
+                  <div>
+                    <strong>{cargando ? "..." : estadisticasMaquila.length}</strong>
+                    <span>Maquilas totales</span>
                   </div>
                 </div>
-
-                <aside className="enterprise-delivery-alerts">
-                  <div className="enterprise-delivery-alerts-header">
-                    <div>
-                      <Icono nombre="bell" size={18} />
-                      <strong>Notificaciones</strong>
-                    </div>
-                    <span>{alertasEntrega.length}</span>
+                <div className="enterprise-inventory-list">
+                  <div className="enterprise-inventory-item">
+                    <span>Pedidos en proceso</span>
+                    <strong>{cargando ? "..." : totalUnidades}</strong>
                   </div>
-
-                  <div className="enterprise-delivery-alerts-list">
-                    {alertasEntrega.length === 0 ? (
-                      <div className="enterprise-delivery-alerts-empty">
-                        <Icono nombre="check" size={22} />
-                        <strong>Todo al día</strong>
-                        <span>
-                          No hay entregas para mañana ni pedidos vencidos.
-                        </span>
-                      </div>
-                    ) : (
-                      alertasEntrega.slice(0, 6).map((pedido) => (
-                        <button
-                          type="button"
-                          key={`alerta-${pedido.id}-${pedido.codigo}`}
-                          className={`enterprise-delivery-alert enterprise-delivery-alert-${pedido.tipo}`}
-                          onClick={() => {
-                            setPedidoSeleccionadoId(pedido.id);
-                            setBusquedaGeneral(pedido.codigo);
-                            setFiltroEstado("todos");
-                            window.requestAnimationFrame(() =>
-                              irASeccion("pedidos-recientes")
-                            );
-                          }}
-                        >
-                          <span className="enterprise-delivery-alert-icon">
-                            <Icono
-                              nombre={
-                                pedido.tipo === "vencida" ? "alert" : "clock"
-                              }
-                              size={17}
-                            />
-                          </span>
-                          <span>
-                            <strong>{pedido.codigo}</strong>
-                            <small>{pedido.mensajeAlerta}</small>
-                            <em>
-                              {pedido.tipoPrenda} · {pedido.fechaEntrega}
-                            </em>
-                          </span>
-                          <Icono nombre="chevron" size={15} />
-                        </button>
-                      ))
-                    )}
+                  <div className="enterprise-inventory-item">
+                    <span>Progreso promedio</span>
+                    <strong>{cargando ? "..." : `${progresoPromedio}%`}</strong>
                   </div>
-                </aside>
+                </div>
               </div>
             </article>
 
+            <article className="enterprise-card enterprise-inventory-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>INSUMOS</span>
+                  <h3>Stock y urgencias</h3>
+                </div>
+              </div>
+              <div className="enterprise-inventory-summary">
+                <div className="enterprise-inventory-header">
+                  <div>
+                    <strong>{cargando ? "..." : inventarioResumido.totalInsumos}</strong>
+                    <span>Insumos registrados</span>
+                  </div>
+                  <div>
+                    <strong>{cargando ? "..." : inventarioResumido.totalStock.toLocaleString("es-EC")}</strong>
+                    <span>Stock total</span>
+                  </div>
+                </div>
+                <div className="enterprise-inventory-list">
+                  <div className="enterprise-inventory-item">
+                    <span>Insumos críticos</span>
+                    <strong>{cargando ? "..." : inventarioResumido.insumosCriticos}</strong>
+                  </div>
+                  <div className="enterprise-inventory-item">
+                    <span>Stock normal</span>
+                    <strong>{cargando ? "..." : inventarioResumido.totalStock - inventarioResumido.insumosCriticos}</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
           </section>
 
-          <section
-            id="pedidos-recientes"
-            className="enterprise-card enterprise-orders-card"
-          >
-            <div className="enterprise-card-header enterprise-orders-header">
-              <div>
-                <span>OPERACIÓN RECIENTE</span>
-                <h3>Pedidos recientes</h3>
-                <small>
-                  Mostrando {pedidosRecientes.length} de {pedidosTabla.length} pedido(s)
-                </small>
-              </div>
-
-              <div className="enterprise-table-tools">
-                <select
-                  value={filtroEstado}
-                  onChange={(event) => setFiltroEstado(event.target.value)}
-                  aria-label="Filtrar pedidos por estado"
-                >
-                  <option value="todos">Todos los estados</option>
-                  <option value="activo">Activos</option>
-                  <option value="retrasado">Retrasados</option>
-                  <option value="finalizado">Finalizados</option>
-                </select>
-
+          <section className="enterprise-inventory-dashboard">
+            <article className="enterprise-card enterprise-inventory-overview-card">
+              <div className="enterprise-section-header">
+                <div>
+                  <span>Inventario de insumos</span>
+                  <h3>Aquí tienes un resumen general del sistema.</h3>
+                </div>
                 <button
                   type="button"
                   className="enterprise-refresh-button"
                   onClick={() => cargarInformacion(false)}
-                  disabled={actualizando}
                 >
-                  <Icono nombre="refresh" size={17} />
-                  {actualizando ? "Actualizando" : "Actualizar"}
+                  Contar insumos
                 </button>
               </div>
+
+              <div className="enterprise-inventory-alert-grid">
+                <article className="enterprise-small-card inventory-alert-card">
+                  <span>Alertas de inventario</span>
+                  <strong>{cargando ? "..." : `${inventarioResumido.insumosCriticos} insumos críticos`}</strong>
+                  <small>
+                    {cargando
+                      ? "Cargando..."
+                      : insumosCriticosDetalle.length > 0
+                      ? insumosCriticosDetalle
+                          .slice(0, 2)
+                          .map((item) => item.codigo)
+                          .join(", ") +
+                        (insumosCriticosDetalle.length > 2 ? " ..." : "")
+                      : "No hay alertas críticas."}
+                  </small>
+                </article>
+
+                <article className="enterprise-small-card inventory-stock-card">
+                  <span>Stock crítico</span>
+                  <strong>{cargando ? "..." : inventarioResumido.insumosCriticos}</strong>
+                  <small>Requieren atención inmediata</small>
+                </article>
+
+                <article className="enterprise-small-card inventory-trend-card">
+                  <span>Resumen</span>
+                  <strong>{cargando ? "..." : `${inventarioResumido.totalInsumos} insumos`}</strong>
+                  <small>{cargando ? "..." : `${Math.max(0, inventarioResumido.totalStock - inventarioResumido.insumosCriticos)} con stock adecuado`}</small>
+                </article>
+              </div>
+
+              <div className="enterprise-inventory-table-card">
+                <div className="enterprise-table-toolbar">
+                  <div className="enterprise-global-search">
+                    <Icono nombre="search" size={16} />
+                    <input
+                      type="search"
+                      value={busquedaInsumos}
+                      onChange={(event) => setBusquedaInsumos(event.target.value)}
+                      placeholder="Buscar insumo"
+                      aria-label="Buscar insumo"
+                    />
+                  </div>
+                </div>
+
+                <div className="enterprise-table-wrapper">
+                  <table className="enterprise-orders-table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Nombre insumo</th>
+                        <th>Categoría</th>
+                        <th>Stock actual</th>
+                        <th>Stock mínimo</th>
+                        <th>Unidad</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {insumosFiltrados.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="dashboard-empty">
+                            No hay insumos críticos o no se encontraron datos.
+                          </td>
+                        </tr>
+                      ) : (
+                        insumosFiltrados.map((insumo, index) => (
+                          <tr key={`insumo-${index}`}>
+                            <td>{insumo.codigo}</td>
+                            <td>{insumo.nombre}</td>
+                            <td>{insumo.categoria}</td>
+                            <td>{insumo.stockActual}</td>
+                            <td>{insumo.stockMinimo}</td>
+                            <td>{insumo.unidadMedida}</td>
+                            <td>{insumo.estado}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+          </section>
+          <section className="enterprise-calendar-notifications-grid" id="calendario-notificaciones">
+            <article className="enterprise-card enterprise-calendar-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>CALENDARIO</span>
+                  <h3>Entrega y fechas clave</h3>
+                </div>
+              </div>
+              <div className="enterprise-calendar-simple">
+                <div className="calendar-header">
+                  <strong>{calendarioActual.titulo}</strong>
+                </div>
+                <div className="calendar-days">
+                  {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'].map((dia) => (
+                    <span key={dia}>{dia}</span>
+                  ))}
+                </div>
+                <div className="calendar-grid">
+                  {calendarioActual.celdas.map((dia, indice) => {
+                    if (!dia) {
+                      return <span key={`vacio-${indice}`} className="calendar-empty" />;
+                    }
+                    const entregasDia = calendarioActual.entregasPorDia[dia] || [];
+                    const clases = [
+                      dia === calendarioActual.hoy ? 'active-day' : '',
+                      entregasDia.length > 0 ? 'delivery-day' : '',
+                      dia === calendarioActual.manana && entregasDia.some((pedido) => obtenerTipoEstado(pedido) !== 'finalizado')
+                        ? 'delivery-tomorrow'
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
+                    return (
+                      <span
+                        key={`dia-${dia}`}
+                        className={clases}
+                        title={
+                          entregasDia.length
+                            ? entregasDia.map((pedido) => pedido.codigo).join(', ')
+                            : undefined
+                        }
+                      >
+                        {dia}
+                        {entregasDia.length > 0 && <i>{entregasDia.length}</i>}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="calendar-legend">
+                  <span>
+                    <i className="calendar-legend-today" /> Hoy
+                  </span>
+                  <span>
+                    <i className="calendar-legend-delivery" /> Entrega
+                  </span>
+                  <span>
+                    <i className="calendar-legend-tomorrow" /> Mañana
+                  </span>
+                </div>
+              </div>
+            </article>
+
+            <article className="enterprise-card enterprise-notifications-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>NOTIFICACIONES</span>
+                  <h3>Alertas de entrega</h3>
+                </div>
+              </div>
+              <div className="enterprise-delivery-alerts-list">
+                {alertasEntrega.length === 0 ? (
+                  <div className="enterprise-delivery-alerts-empty">
+                    <Icono nombre="check" size={22} />
+                    <strong>Sin alertas</strong>
+                    <span>No hay alertas críticas en este momento.</span>
+                  </div>
+                ) : (
+                  alertasEntrega.slice(0, 6).map((pedido) => (
+                    <button
+                      type="button"
+                      key={`alerta-${pedido.id}-${pedido.codigo}`}
+                      className={`enterprise-delivery-alert enterprise-delivery-alert-${pedido.tipo}`}
+                      onClick={() => {
+                        setPedidoSeleccionadoId(pedido.id);
+                        setBusquedaGeneral(pedido.codigo);
+                        setFiltroEstado('todos');
+                        window.requestAnimationFrame(() => irASeccion('pedidos-recientes'));
+                      }}
+                    >
+                      <span className="enterprise-delivery-alert-icon">
+                        <Icono nombre={pedido.tipo === 'vencida' ? 'alert' : 'clock'} size={17} />
+                      </span>
+                      <span>
+                        <strong>{pedido.codigo}</strong>
+                        <small>{pedido.mensajeAlerta}</small>
+                        <em>
+                          {pedido.tipoPrenda} · {pedido.fechaEntrega}
+                        </em>
+                      </span>
+                      <Icono nombre="chevron" size={15} />
+                    </button>
+                  ))
+                )}
+              </div>
+            </article>
+          </section>
+
+          <article className="enterprise-card enterprise-machines-card">
+            <div className="enterprise-card-header">
+              <div>
+                <span>MAQUILAS E INSUMOS</span>
+                <h3>Disponibilidad del turno</h3>
+              </div>
+            </div>
+            <div className="enterprise-inventory-availability">
+              <div>
+                <strong>{cargando ? '...' : maquilasDisponibles}</strong>
+                <span>Maquilas disponibles</span>
+              </div>
+              <div>
+                <strong>{cargando ? '...' : inventarioResumido.totalStock.toLocaleString('es-EC')}</strong>
+                <span>Stock total</span>
+              </div>
+              <div>
+                <strong>{cargando ? '...' : inventarioResumido.insumosCriticos}</strong>
+                <span>Insumos críticos</span>
+              </div>
+            </div>
+            <div className="enterprise-machines-note">
+              <small>Monitoreo rápido de maquilas e insumos disponibles para la próxima entrega.</small>
+            </div>
+          </article>
+
+          <section className="enterprise-orders-section" id="pedidos-recientes">
+            <div className="enterprise-section-header">
+              <div>
+                <span>OPERACIÓN RECIENTE</span>
+                <h3>Pedidos recientes</h3>
+              </div>
+              <button
+                type="button"
+                className="enterprise-refresh-button"
+                onClick={() => cargarInformacion(false)}
+              >
+                <Icono nombre="refresh" size={15} />
+                Actualizar
+              </button>
             </div>
 
             <div className="enterprise-table-wrapper">
               <table className="enterprise-orders-table">
                 <thead>
                   <tr>
-                    <th>Pedido</th>
+                    <th>Código</th>
                     <th>Prenda</th>
-                    <th>Maquila</th>
+                    <th>Maquila / Taller</th>
                     <th>Cantidad</th>
                     <th>Estado</th>
                     <th>Entrega</th>
                     <th>Progreso</th>
-                    <th aria-label="Acciones" />
                   </tr>
                 </thead>
-
                 <tbody>
-                  {!cargando && pedidosRecientes.length === 0 && (
+                  {pedidosRecientes.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="dashboard-empty">
-                        No se encontraron pedidos con los filtros seleccionados.
+                      <td colSpan="7" className="dashboard-empty">
+                        No hay pedidos recientes.
                       </td>
                     </tr>
-                  )}
-
-                  {pedidosRecientes.map((pedido) => {
-                    const tipoEstado = obtenerTipoEstado(pedido);
-                    const seleccionado =
-                      pedidoSeleccionado &&
-                      pedidosCoinciden(pedido, pedidoSeleccionado);
-
-                    return (
+                  ) : (
+                    pedidosRecientes.map((pedido) => (
                       <tr
                         key={`${pedido.id}-${pedido.codigo}`}
-                        className={seleccionado ? "is-selected" : ""}
-                        onClick={() => setPedidoSeleccionadoId(pedido.id)}
+                        onClick={() => {
+                          setPedidoSeleccionadoId(pedido.id);
+                          setBusquedaGeneral(pedido.codigo);
+                        }}
                       >
-                        <td>
-                          <div className="enterprise-order-code">
-                            <span>
-                              <Icono nombre="package" size={17} />
-                            </span>
-                            <div>
-                              <strong>{pedido.codigo}</strong>
-                              <small>Ingreso {pedido.fechaIngreso}</small>
-                            </div>
-                          </div>
-                        </td>
+                        <td>{pedido.codigo}</td>
                         <td>{pedido.tipoPrenda}</td>
                         <td>{pedido.maquila}</td>
+                        <td>{pedido.cantidad}</td>
                         <td>
-                          <strong>{pedido.cantidad}</strong>
-                        </td>
-                        <td>
-                          <span
-                            className={`status-badge status-badge-${tipoEstado}`}
-                          >
+                          <span className={`status-badge status-badge-${obtenerTipoEstado(pedido)}`}>
                             {pedido.estado}
                           </span>
                         </td>
                         <td>{pedido.fechaEntrega}</td>
                         <td>
-                          <div className="enterprise-table-progress">
-                            <div className="enterprise-progress-track">
-                              <div
-                                className="enterprise-progress-value"
-                                style={{ width: `${pedido.progreso}%` }}
-                              />
+                          <div className="progress-content">
+                            <div className="progress-track">
+                              <div className="progress-value" style={{ width: `${pedido.progreso}%` }} />
                             </div>
                             <span>{pedido.progreso}%</span>
                           </div>
                         </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="enterprise-row-action"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setPedidoSeleccionadoId(pedido.id);
-                              seleccionarPedidoEditar(pedido);
-                              setModalEditarAbierto(true);
-                            }}
-                            aria-label={`Editar pedido ${pedido.codigo}`}
-                          >
-                            <Icono nombre="edit" size={17} />
-                          </button>
-                        </td>
                       </tr>
-                    );
-                  })}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
+          </section>
 
-            <div className="enterprise-table-footer">
-              <span>
-                Última actualización: {new Intl.DateTimeFormat("es-EC", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(new Date())}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setFiltroEstado("todos");
-                  setBusquedaGeneral("");
-                }}
-              >
-                Limpiar filtros
-              </button>
+          <section id="seccion-prendas" className="enterprise-prendas-section">
+            <Prendas
+              onDatosActualizados={(lista) => {
+                setPrendasBackend(lista);
+              }}
+            />
+          </section>
+
+          <section className="enterprise-dashboard-final-grid">
+            <article className="enterprise-final-card ficha-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>DETALLE</span>
+                  <h3>Ficha técnica de la prenda</h3>
+                </div>
+              </div>
+              <div className="enterprise-final-list compact">
+                <div>
+                  <strong>Código</strong>
+                  <span>{pedidoSeleccionado?.codigo || 'N/A'}</span>
+                </div>
+                <div>
+                  <strong>Prenda</strong>
+                  <span>{pedidoSeleccionado?.tipoPrenda || 'Sin datos'}</span>
+                </div>
+                <div>
+                  <strong>Color</strong>
+                  <span>{pedidoSeleccionado?.color || 'Sin datos'}</span>
+                </div>
+                <div>
+                  <strong>Talla</strong>
+                  <span>{pedidoSeleccionado?.talla || 'Sin datos'}</span>
+                </div>
+                <div>
+                  <strong>Cantidad</strong>
+                  <span>{pedidoSeleccionado?.cantidad || '0'}</span>
+                </div>
+                <div>
+                  <strong>Estado</strong>
+                  <span>{pedidoSeleccionado?.estado || 'Pendiente'}</span>
+                </div>
+                <div>
+                  <strong>Entrega</strong>
+                  <span>{pedidoSeleccionado?.fechaEntrega || 'Sin fecha'}</span>
+                </div>
+              </div>
+            </article>
+
+            <article className="enterprise-final-card fases-card">
+              <div className="enterprise-card-header">
+                <div>
+                  <span>FASES Y TAREAS</span>
+                  <h3>Flujo de producción</h3>
+                </div>
+              </div>
+              <div className="enterprise-final-list compact">
+                <div>
+                  <strong>Fases registradas</strong>
+                  <span>{cargando ? '...' : totalFases}</span>
+                </div>
+                <div>
+                  <strong>Tareas en el sistema</strong>
+                  <span>{cargando ? '...' : totalTareas}</span>
+                </div>
+                <div>
+                  <strong>Control calidad</strong>
+                  <span>{cargando ? '...' : totalControlCalidad}</span>
+                </div>
+              </div>
+              <div className="enterprise-final-summary">
+                {(tareasBackend.slice(0, 4) || []).map((tarea, index) => (
+                  <div key={`tarea-${index}`}>
+                    <strong>{tarea.nombre || tarea.tarea || `Tarea ${index + 1}`}</strong>
+                    <span>{tarea.estado || tarea.status || 'Pendiente'}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <div className="enterprise-final-column">
+              <article className="enterprise-final-card">
+                <div className="enterprise-card-header">
+                  <div>
+                    <span>INSUMOS</span>
+                    <h3>Gestión de insumos</h3>
+                  </div>
+                </div>
+                <div className="enterprise-final-list compact">
+                  {(insumosBackend.slice(0, 3) || []).map((insumo, index) => (
+                    <div key={`insumo-${index}`}>
+                      <strong>{insumo.codigo || insumo.nombre || `Insumo ${index + 1}`}</strong>
+                      <span>{`Stock ${insumo.stock_actual ?? insumo.stock ?? 'N/A'}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="enterprise-final-card">
+                <div className="enterprise-card-header">
+                  <div>
+                    <span>CONTROL DE CALIDAD</span>
+                    <h3>Revisiones recientes</h3>
+                  </div>
+                </div>
+                <div className="enterprise-final-list compact">
+                  {(controlCalidadBackend.slice(0, 3) || []).map((item, index) => (
+                    <div key={`qc-${index}`}>
+                      <strong>{item.codigo_insumo || item.codigo_pedido || `QC ${index + 1}`}</strong>
+                      <span>{item.resultado || item.estado || 'Pendiente'}</span>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="enterprise-final-card">
+                <div className="enterprise-card-header">
+                  <div>
+                    <span>ARCHIVOS E INFORMES</span>
+                    <h3>Documentos recientes</h3>
+                  </div>
+                </div>
+                <div className="enterprise-final-list compact">
+                  {(archivosBackend.slice(0, 2) || []).map((archivo, index) => (
+                    <div key={`archivo-${index}`}>
+                      <strong>{archivo.nombre || archivo.archivo || `Archivo ${index + 1}`}</strong>
+                      <span>{archivo.tipo || archivo.extension || 'PDF'}</span>
+                    </div>
+                  ))}
+                  {(informesBackend.slice(0, 2) || []).map((informe, index) => (
+                    <div key={`informe-${index}`}>
+                      <strong>{informe.titulo || informe.nombre || `Informe ${index + 1}`}</strong>
+                      <span>{informe.fecha || informe.created_at || 'Sin fecha'}</span>
+                    </div>
+                  ))}
+                </div>
+              </article>
             </div>
           </section>
         </main>
