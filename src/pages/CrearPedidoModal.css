@@ -12,69 +12,56 @@
 
 .pedido-modal {
   width: 100%;
-  max-width: 920px;
+  max-width: 850px;
   max-height: calc(100vh - 50px);
   overflow-y: auto;
-  background: #f4f7fb;
-  border-radius: 22px;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.3);
 }
 
 .pedido-modal-header {
   position: sticky;
   top: 0;
   z-index: 5;
-  min-height: 92px;
-  padding: 24px 30px;
+  min-height: 85px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
   color: #ffffff;
-  background: linear-gradient(135deg, #1f5d96, #2f7bbd);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(
+    135deg,
+    #174f82,
+    #246ca5,
+    #337eb7
+  );
+  border-bottom: 4px solid #d9e9f5;
 }
 
 .pedido-modal-header span {
-  color: #d8ecff;
+  color: #d6ebfa;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .pedido-modal-header h2 {
-  margin: 4px 0 6px;
-  font-size: 26px;
-  letter-spacing: -0.03em;
-}
-
-.pedido-modal-description {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
-  line-height: 1.6;
-  max-width: 520px;
+  margin: 4px 0 0;
+  font-size: 23px;
 }
 
 .pedido-modal-close {
-  width: 46px;
-  height: 46px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   color: #ffffff;
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.pedido-modal-close:hover:not(:disabled) {
-  transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.28);
 }
 
 .pedido-modal-close:hover:not(:disabled) {
@@ -82,15 +69,13 @@
 }
 
 .pedido-form {
-  padding: 32px;
-  background: #ffffff;
-  border-radius: 0 0 22px 22px;
+  padding: 25px;
 }
 
 .pedido-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  gap: 19px;
 }
 
 .pedido-field {
@@ -102,37 +87,29 @@
 }
 
 .pedido-field label {
-  margin-bottom: 8px;
+  margin-bottom: 7px;
   display: block;
-  color: #35516f;
+  color: #294a64;
   font-size: 13px;
   font-weight: 700;
-}
-
-.pedido-field small {
-  display: block;
-  margin-top: 5px;
-  color: #62798f;
-  font-size: 12px;
 }
 
 .pedido-field input,
 .pedido-field select,
 .pedido-field textarea {
   width: 100%;
-  min-height: 48px;
-  padding: 12px 14px;
-  color: #243754;
+  min-height: 46px;
+  padding: 10px 12px;
+  color: #253b4d;
   font-family: inherit;
   font-size: 14px;
-  background: #f7faff;
-  border: 1px solid #d6e3ef;
-  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #c8d5df;
+  border-radius: 7px;
   outline: none;
   transition:
     border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    box-shadow 0.2s ease;
 }
 
 .pedido-field textarea {
@@ -143,16 +120,15 @@
 .pedido-field input:focus,
 .pedido-field select:focus,
 .pedido-field textarea:focus {
-  border-color: #3d8fe4;
-  box-shadow: 0 0 0 4px rgba(61, 143, 228, 0.15);
-  transform: translateY(-1px);
+  border-color: #2375ad;
+  box-shadow: 0 0 0 4px rgba(35, 117, 173, 0.13);
 }
 
 .pedido-field input:disabled,
 .pedido-field select:disabled,
 .pedido-field textarea:disabled {
   cursor: not-allowed;
-  background: #eff4f8;
+  background: #edf1f4;
 }
 
 .pedido-form-error,
@@ -176,23 +152,23 @@
 }
 
 .pedido-form-actions {
-  margin-top: 30px;
-  padding-top: 24px;
+  margin-top: 27px;
+  padding-top: 20px;
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
-  border-top: 1px solid #eef3f8;
+  gap: 12px;
+  border-top: 1px solid #dae4eb;
 }
 
 .pedido-cancel-button,
 .pedido-save-button {
-  min-width: 140px;
-  height: 48px;
-  padding: 0 24px;
+  min-width: 135px;
+  height: 45px;
+  padding: 0 20px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  border-radius: 12px;
+  border-radius: 7px;
   cursor: pointer;
 }
 
@@ -210,15 +186,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 9px;
   color: #ffffff;
-  background: linear-gradient(135deg, #1564a2, #2e84ce);
+  background: linear-gradient(135deg, #155e93, #2280bc);
   border: none;
-  box-shadow: 0 8px 20px rgba(17, 91, 143, 0.18);
+  box-shadow: 0 5px 12px rgba(24, 103, 157, 0.25);
 }
 
 .pedido-save-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #124f85, #246fb7);
+  background: linear-gradient(135deg, #104e7b, #196fa7);
 }
 
 .pedido-cancel-button:disabled,
@@ -240,25 +216,6 @@
 @keyframes pedido-girar {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 920px) {
-  .pedido-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pedido-modal {
-    max-width: 100%;
-    border-radius: 16px;
-  }
-
-  .pedido-form {
-    padding: 24px;
-  }
-
-  .pedido-modal-header {
-    padding: 20px 22px;
   }
 }
 

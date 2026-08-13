@@ -24,12 +24,16 @@ const ENDPOINTS = {
   pedidos: ["/pedidos/"],
   seguimientos: ["/seguimiento/", "/seguimientos/"],
   insumos: ["/insumos/"],
+  enviosInsumos: ["/envios_insumos/"],
   maquilas: ["/maquilas/"],
   controlCalidad: ["/control_calidad/"],
-  archivos: ["/archivos/"],
-  informes: ["/informes/"],
-  fases: ["/fases/"],
-  tareas: ["/tareas/"],
+  // Se deja también la ruta duplicada como respaldo porque en tu Swagger actual
+  // aparecen prefijos agregados desde main.py. Al reemplazar el main corregido,
+  // las rutas limpias serán /archivos/ y /informes/.
+  archivos: ["/archivos/", "/archivos/archivos/"],
+  informes: ["/informes/", "/informes/informes/"],
+  fases: ["/fases/", "/fases", "/fase/", "/fase"],
+  tareas: ["/tareas/", "/tareas", "/tarea/", "/tarea"],
   prendas: ["/prendas/"],
 };
 
@@ -45,6 +49,40 @@ const FORMULARIO_VACIO = {
   prioridad: "Media",
   estado: "Pendiente",
   observaciones: "",
+};
+
+const FORMULARIO_INSUMO_VACIO = {
+  nombre_insumo: "",
+  unidad_medida: "und",
+  stock_actual: "",
+  stock_minimo: "",
+};
+
+const FORMULARIO_SALIDA_INSUMO_VACIO = {
+  id_insumo: "",
+  id_pedido: "",
+  cantidad: "",
+  fecha_envio: new Date().toISOString().slice(0, 10),
+};
+
+const FORMULARIO_CONTROL_CALIDAD_VACIO = {
+  id_pedido: "",
+  fecha_revision: new Date().toISOString().slice(0, 10),
+  cantidad_buena: "",
+  cantidad_defectuosa: "",
+  observaciones: "",
+};
+
+const FORMULARIO_INFORME_VACIO = {
+  codigo_pedido: "",
+  accion_salida: "guardar_pdf",
+  nombre_archivo: "",
+};
+
+const FORMULARIO_ARCHIVO_VACIO = {
+  id_pedido: "",
+  nombre_archivo: "",
+  ruta_archivo: "",
 };
 
 /* =====================================================
@@ -128,7 +166,488 @@ async function eliminarPedidoDisponible(idPedido) {
   throw ultimoError || new Error("No se encontró la ruta para eliminar pedidos.");
 }
 
+async function crearInsumoDisponible(payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.insumos) {
+    try {
+      return await api.post(ruta, payload);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para crear insumos.");
+}
+
+async function actualizarInsumoDisponible(idInsumo, payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.insumos) {
+    const url = `${limpiarRuta(ruta)}/${idInsumo}`;
+
+    for (const metodo of ["patch", "put"]) {
+      try {
+        return await api[metodo](url, payload);
+      } catch (error) {
+        ultimoError = error;
+        const estado = error.response?.status;
+        if (estado !== 404 && estado !== 405) throw error;
+      }
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para actualizar insumos.");
+}
+
+async function registrarSalidaInsumoDisponible(payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.enviosInsumos) {
+    try {
+      return await api.post(ruta, payload);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para registrar salidas de insumos.");
+}
+
+async function crearControlCalidadDisponible(payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.controlCalidad) {
+    try {
+      return await api.post(ruta, payload);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para registrar controles de calidad.");
+}
+
+async function actualizarControlCalidadDisponible(idControl, payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.controlCalidad) {
+    const url = `${limpiarRuta(ruta)}/${idControl}`;
+
+    for (const metodo of ["patch", "put"]) {
+      try {
+        return await api[metodo](url, payload);
+      } catch (error) {
+        ultimoError = error;
+        const estado = error.response?.status;
+        if (estado !== 404 && estado !== 405) throw error;
+      }
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para actualizar controles de calidad.");
+}
+
+async function eliminarControlCalidadDisponible(idControl) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.controlCalidad) {
+    const url = `${limpiarRuta(ruta)}/${idControl}`;
+
+    try {
+      return await api.delete(url);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para eliminar controles de calidad.");
+}
+
+
+async function crearInformePorCodigoDisponible(payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.informes) {
+    const url = `${limpiarRuta(ruta)}/codigo`;
+    try {
+      return await api.post(url, payload);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para generar informes.");
+}
+
+async function obtenerInformePorCodigoDisponible(codigoPedido) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.informes) {
+    const url = `${limpiarRuta(ruta)}/pedido/${encodeURIComponent(codigoPedido)}`;
+    try {
+      return await api.get(url);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró el informe del pedido.");
+}
+
+async function eliminarInformeDisponible(idInforme) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.informes) {
+    const url = `${limpiarRuta(ruta)}/${idInforme}`;
+    try {
+      return await api.delete(url);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para eliminar informes.");
+}
+
+async function crearArchivoDisponible(payload) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.archivos) {
+    try {
+      return await api.post(ruta, payload);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para registrar archivos.");
+}
+
+async function eliminarArchivoDisponible(idArchivo) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.archivos) {
+    const url = `${limpiarRuta(ruta)}/${idArchivo}`;
+    try {
+      return await api.delete(url);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+      if (estado !== 404 && estado !== 405) throw error;
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para eliminar archivos.");
+}
+
+function escaparHtml(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+function limpiarNombreArchivo(valor, alternativo = "informe.pdf") {
+  const limpio = String(valor || "")
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const nombre = limpio || alternativo;
+  return nombre.toLowerCase().endsWith(".pdf") ? nombre : `${nombre}.pdf`;
+}
+
+function nombrePdfSugerido(codigoPedido) {
+  const codigo = String(codigoPedido || "pedido")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "pedido";
+  return `Informe_${codigo}.pdf`;
+}
+
+function textoPlanoSeguro(valor, alternativo = "-") {
+  if (valor === null || valor === undefined || String(valor).trim() === "") {
+    return alternativo;
+  }
+  return String(valor).replace(/\r/g, "").trim();
+}
+
+function envolverTexto(valor, maximo = 88) {
+  const parrafos = textoPlanoSeguro(valor, "").split("\n");
+  const lineas = [];
+
+  parrafos.forEach((parrafo) => {
+    const palabras = parrafo.trim().split(/\s+/).filter(Boolean);
+    if (palabras.length === 0) {
+      lineas.push("");
+      return;
+    }
+
+    let linea = "";
+    palabras.forEach((palabra) => {
+      const candidata = linea ? `${linea} ${palabra}` : palabra;
+      if (candidata.length > maximo && linea) {
+        lineas.push(linea);
+        linea = palabra;
+      } else {
+        linea = candidata;
+      }
+    });
+    if (linea) lineas.push(linea);
+  });
+
+  return lineas;
+}
+
+function codificarWinAnsi(texto) {
+  const mapa = {
+    "€": 128, "‚": 130, "ƒ": 131, "„": 132, "…": 133, "†": 134,
+    "‡": 135, "ˆ": 136, "‰": 137, "Š": 138, "‹": 139, "Œ": 140,
+    "Ž": 142, "‘": 145, "’": 146, "“": 147, "”": 148, "•": 149,
+    "–": 150, "—": 151, "˜": 152, "™": 153, "š": 154, "›": 155,
+    "œ": 156, "ž": 158, "Ÿ": 159,
+  };
+
+  const bytes = [];
+  for (const caracter of String(texto ?? "")) {
+    const codigo = caracter.codePointAt(0);
+    if (codigo <= 255) bytes.push(codigo);
+    else if (mapa[caracter] !== undefined) bytes.push(mapa[caracter]);
+    else bytes.push(63);
+  }
+  return new Uint8Array(bytes);
+}
+
+function concatenarBytes(...partes) {
+  const total = partes.reduce((suma, parte) => suma + parte.length, 0);
+  const resultado = new Uint8Array(total);
+  let offset = 0;
+  partes.forEach((parte) => {
+    resultado.set(parte, offset);
+    offset += parte.length;
+  });
+  return resultado;
+}
+
+function asciiBytes(texto) {
+  return new TextEncoder().encode(String(texto));
+}
+
+function escaparTextoPdfBytes(texto) {
+  const origen = codificarWinAnsi(texto);
+  const salida = [];
+  for (const byte of origen) {
+    if (byte === 40 || byte === 41 || byte === 92) salida.push(92, byte);
+    else if (byte === 10 || byte === 13) salida.push(32);
+    else salida.push(byte);
+  }
+  return new Uint8Array(salida);
+}
+
+function construirPdfInforme(detalle, codigoAlternativo = "") {
+  const pedido = detalle?.pedido || {};
+  const maquila = detalle?.maquila || {};
+  const fase = detalle?.fase_actual || {};
+  const seguimientos = Array.isArray(detalle?.seguimientos) ? detalle.seguimientos : [];
+
+  const codigo = textoPlanoSeguro(
+    pedido.codigo_pedido || codigoAlternativo,
+    "Sin código"
+  );
+  const prenda = textoPlanoSeguro(
+    pedido.tipo_prenda || pedido.nombre_prenda,
+    "Sin especificar"
+  );
+  const nombreMaquila = textoPlanoSeguro(
+    maquila.nombre_maquila || maquila.nombre || pedido.id_maquila,
+    "Sin asignar"
+  );
+  const faseActual = textoPlanoSeguro(
+    fase.nombre_fase || fase.nombre,
+    "Sin fase registrada"
+  );
+
+  const lineas = [
+    { texto: "MAQUILA SYSTEM EC", tam: 17, negrita: true, salto: 23 },
+    { texto: `Informe de producción - ${codigo}`, tam: 12, negrita: true, salto: 20 },
+    { texto: `Prenda: ${prenda}`, tam: 10, salto: 15 },
+    { texto: `Maquila: ${nombreMaquila}`, tam: 10, salto: 15 },
+    { texto: `Fase actual: ${faseActual}`, tam: 10, salto: 15 },
+    { texto: `Tiempo planificado: ${Number(detalle?.tiempo_planificado || 0)} días`, tam: 10, salto: 15 },
+    { texto: `Tiempo real: ${Number(detalle?.tiempo_real || 0)} días`, tam: 10, salto: 15 },
+    { texto: `Cumplimiento: ${Number(detalle?.porcentaje_cumplimiento || 0)}%`, tam: 10, salto: 19 },
+    { texto: "Observaciones generales", tam: 11, negrita: true, salto: 17 },
+  ];
+
+  envolverTexto(detalle?.observaciones_generales || "Sin observaciones registradas.", 90)
+    .forEach((texto) => lineas.push({ texto, tam: 9, salto: 13 }));
+
+  lineas.push({ texto: "", tam: 9, salto: 8 });
+  lineas.push({ texto: "Seguimientos", tam: 11, negrita: true, salto: 17 });
+
+  if (seguimientos.length === 0) {
+    lineas.push({ texto: "Sin seguimientos registrados.", tam: 9, salto: 13 });
+  } else {
+    seguimientos.forEach((seg, indice) => {
+      const cabecera = `${indice + 1}. ${textoPlanoSeguro(seg.fecha_inicio)} a ${textoPlanoSeguro(seg.fecha_fin)} | Avance ${Number(seg.porcentaje_avance || 0)}%`;
+      lineas.push({ texto: cabecera, tam: 9, salto: 13 });
+      envolverTexto(seg.observacion || "Sin observación", 84).forEach((texto) => {
+        lineas.push({ texto: `   ${texto}`, tam: 8.5, salto: 12 });
+      });
+    });
+  }
+
+  const altoPagina = 842;
+  const margenSuperior = 790;
+  const margenInferior = 52;
+  const paginas = [];
+  let pagina = [];
+  let y = margenSuperior;
+
+  lineas.forEach((linea) => {
+    const salto = Number(linea.salto || 14);
+    if (y - salto < margenInferior && pagina.length) {
+      paginas.push(pagina);
+      pagina = [];
+      y = margenSuperior;
+    }
+    pagina.push({ ...linea, y });
+    y -= salto;
+  });
+  if (pagina.length) paginas.push(pagina);
+
+  const numeroPaginas = paginas.length || 1;
+  const idFuenteRegular = 3 + numeroPaginas * 2;
+  const idFuenteNegrita = idFuenteRegular + 1;
+  const objetos = new Map();
+
+  objetos.set(1, asciiBytes("<< /Type /Catalog /Pages 2 0 R >>"));
+  const kids = paginas.map((_, indice) => `${3 + indice * 2} 0 R`).join(" ");
+  objetos.set(2, asciiBytes(`<< /Type /Pages /Kids [${kids}] /Count ${numeroPaginas} >>`));
+
+  paginas.forEach((lineasPagina, indice) => {
+    const idPagina = 3 + indice * 2;
+    const idContenido = idPagina + 1;
+    objetos.set(
+      idPagina,
+      asciiBytes(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 ${altoPagina}] /Resources << /Font << /F1 ${idFuenteRegular} 0 R /F2 ${idFuenteNegrita} 0 R >> >> /Contents ${idContenido} 0 R >>`
+      )
+    );
+
+    const comandos = [];
+    lineasPagina.forEach((linea) => {
+      const fuente = linea.negrita ? "/F2" : "/F1";
+      comandos.push(asciiBytes(`BT ${fuente} ${linea.tam || 9} Tf 50 ${linea.y} Td (`));
+      comandos.push(escaparTextoPdfBytes(linea.texto || " "));
+      comandos.push(asciiBytes(") Tj ET\n"));
+    });
+    comandos.push(asciiBytes(`BT /F1 8 Tf 500 28 Td (Pagina ${indice + 1} de ${numeroPaginas}) Tj ET\n`));
+    const stream = concatenarBytes(...comandos);
+    objetos.set(
+      idContenido,
+      concatenarBytes(
+        asciiBytes(`<< /Length ${stream.length} >>\nstream\n`),
+        stream,
+        asciiBytes("endstream")
+      )
+    );
+  });
+
+  objetos.set(
+    idFuenteRegular,
+    asciiBytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
+  );
+  objetos.set(
+    idFuenteNegrita,
+    asciiBytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>")
+  );
+
+  const totalObjetos = idFuenteNegrita;
+  const encabezado = concatenarBytes(
+    asciiBytes("%PDF-1.4\n%"),
+    new Uint8Array([226, 227, 207, 211]),
+    asciiBytes("\n")
+  );
+  const partes = [encabezado];
+  const offsets = [0];
+  let posicion = encabezado.length;
+
+  for (let id = 1; id <= totalObjetos; id += 1) {
+    const cuerpo = objetos.get(id);
+    const inicio = asciiBytes(`${id} 0 obj\n`);
+    const fin = asciiBytes("\nendobj\n");
+    offsets[id] = posicion;
+    partes.push(inicio, cuerpo, fin);
+    posicion += inicio.length + cuerpo.length + fin.length;
+  }
+
+  const inicioXref = posicion;
+  let xref = `xref\n0 ${totalObjetos + 1}\n0000000000 65535 f \n`;
+  for (let id = 1; id <= totalObjetos; id += 1) {
+    xref += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+  }
+  xref += `trailer\n<< /Size ${totalObjetos + 1} /Root 1 0 R >>\nstartxref\n${inicioXref}\n%%EOF`;
+  partes.push(asciiBytes(xref));
+
+  return new Blob(partes, { type: "application/pdf" });
+}
+
+async function seleccionarDestinoPdf(nombreSugerido) {
+  if (typeof window.showSaveFilePicker !== "function") return null;
+  return window.showSaveFilePicker({
+    suggestedName: limpiarNombreArchivo(nombreSugerido),
+    types: [
+      {
+        description: "Documento PDF",
+        accept: { "application/pdf": [".pdf"] },
+      },
+    ],
+    excludeAcceptAllOption: false,
+  });
+}
+
+async function escribirPdfEnDestino(handle, blob) {
+  const writable = await handle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+}
+
+function descargarPdf(blob, nombreArchivo) {
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = limpiarNombreArchivo(nombreArchivo);
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
 function obtenerMensajeError(error, mensajeAlternativo) {
+  if (!error?.response && (error?.code === "ERR_NETWORK" || error?.message === "Network Error")) {
+    return "No hay conexión con la API. Verifique que FastAPI esté ejecutándose, que el frontend apunte al puerto correcto y que CORS permita la dirección desde la que abrió el sistema.";
+  }
+
   const detalle = error?.response?.data?.detail;
 
   if (Array.isArray(detalle)) {
@@ -637,22 +1156,24 @@ function CamposPedido({ formulario, onChange, deshabilitado = false }) {
       </label>
 
       <label className="dashboard-field">
-        <span>Talla</span>
+        <span>Talla *</span>
         <input
           name="talla"
           value={formulario.talla}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         />
       </label>
 
       <label className="dashboard-field">
-        <span>Color</span>
+        <span>Color *</span>
         <input
           name="color"
           value={formulario.color}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         />
       </label>
 
@@ -670,34 +1191,37 @@ function CamposPedido({ formulario, onChange, deshabilitado = false }) {
       </label>
 
       <label className="dashboard-field">
-        <span>Fecha de ingreso</span>
+        <span>Fecha de ingreso *</span>
         <input
           type="date"
           name="fecha_ingreso"
           value={formulario.fecha_ingreso}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         />
       </label>
 
       <label className="dashboard-field">
-        <span>Fecha de entrega</span>
+        <span>Fecha de entrega *</span>
         <input
           type="date"
           name="fecha_entrega"
           value={formulario.fecha_entrega}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         />
       </label>
 
       <label className="dashboard-field">
-        <span>Prioridad</span>
+        <span>Prioridad *</span>
         <select
           name="prioridad"
           value={formulario.prioridad}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         >
           <option value="Baja">Baja</option>
           <option value="Media">Media</option>
@@ -707,12 +1231,13 @@ function CamposPedido({ formulario, onChange, deshabilitado = false }) {
       </label>
 
       <label className="dashboard-field">
-        <span>Estado</span>
+        <span>Estado *</span>
         <select
           name="estado"
           value={formulario.estado}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         >
           <option value="Pendiente">Pendiente</option>
           <option value="En proceso">En proceso</option>
@@ -724,13 +1249,14 @@ function CamposPedido({ formulario, onChange, deshabilitado = false }) {
       </label>
 
       <label className="dashboard-field dashboard-field-full">
-        <span>Observaciones</span>
+        <span>Observaciones *</span>
         <textarea
           name="observaciones"
           rows="4"
           value={formulario.observaciones}
           onChange={manejarCambio}
           disabled={deshabilitado}
+          required
         />
       </label>
     </div>
@@ -1245,6 +1771,8 @@ function GraficoTendencia({ datos }) {
 }
 
 function SupervisorDashboard({ usuario, onLogout }) {
+  const esSupervisor = Number(usuario?.id_rol) === 1;
+
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
   const [menuCrearAbierto, setMenuCrearAbierto] = useState(false);
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
@@ -1255,11 +1783,46 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const [rolNuevoUsuario, setRolNuevoUsuario] = useState(null);
   const [modalCrearPedidoAbierto, setModalCrearPedidoAbierto] = useState(false);
   const [modalMaquilaAbierto, setModalMaquilaAbierto] = useState(false);
+  const [modalListaMaquilasAbierto, setModalListaMaquilasAbierto] = useState(false);
   const [modalUsuariosAbierto, setModalUsuariosAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
   const [modalEstadoAbierto, setModalEstadoAbierto] = useState(false);
   const [tipoEstadoModal, setTipoEstadoModal] = useState("");
+
+  const [modalInsumoAbierto, setModalInsumoAbierto] = useState(false);
+  const [modalConteoInsumoAbierto, setModalConteoInsumoAbierto] = useState(false);
+  const [modalSalidaInsumoAbierto, setModalSalidaInsumoAbierto] = useState(false);
+  const [formularioInsumo, setFormularioInsumo] = useState(FORMULARIO_INSUMO_VACIO);
+  const [formularioConteoInsumo, setFormularioConteoInsumo] = useState({ id_insumo: "", stock_actual: "", stock_minimo: "" });
+  const [formularioSalidaInsumo, setFormularioSalidaInsumo] = useState(FORMULARIO_SALIDA_INSUMO_VACIO);
+  const [errorInsumo, setErrorInsumo] = useState("");
+  const [guardandoInsumo, setGuardandoInsumo] = useState(false);
+
+  const [busquedaControlCalidad, setBusquedaControlCalidad] = useState("");
+  const [modalControlCalidadAbierto, setModalControlCalidadAbierto] = useState(false);
+  const [controlCalidadEditar, setControlCalidadEditar] = useState(null);
+  const [formularioControlCalidad, setFormularioControlCalidad] = useState(
+    FORMULARIO_CONTROL_CALIDAD_VACIO
+  );
+  const [errorControlCalidad, setErrorControlCalidad] = useState("");
+  const [guardandoControlCalidad, setGuardandoControlCalidad] = useState(false);
+  const [eliminandoControlCalidadId, setEliminandoControlCalidadId] = useState(null);
+
+  const [busquedaInformes, setBusquedaInformes] = useState("");
+  const [modalInformeAbierto, setModalInformeAbierto] = useState(false);
+  const [formularioInforme, setFormularioInforme] = useState(FORMULARIO_INFORME_VACIO);
+  const [informeDetalle, setInformeDetalle] = useState(null);
+  const [errorInforme, setErrorInforme] = useState("");
+  const [generandoInforme, setGenerandoInforme] = useState(false);
+  const [eliminandoInformeId, setEliminandoInformeId] = useState(null);
+
+  const [busquedaArchivos, setBusquedaArchivos] = useState("");
+  const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
+  const [formularioArchivo, setFormularioArchivo] = useState(FORMULARIO_ARCHIVO_VACIO);
+  const [errorArchivo, setErrorArchivo] = useState("");
+  const [guardandoArchivo, setGuardandoArchivo] = useState(false);
+  const [eliminandoArchivoId, setEliminandoArchivoId] = useState(null);
 
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
@@ -1526,49 +2089,71 @@ function SupervisorDashboard({ usuario, onLogout }) {
     ).size;
   }, [pedidos]);
 
+  const insumosDetalle = useMemo(() => {
+    return insumosBackend
+      .map((insumo, index) => {
+        const id = insumo.id_insumo ?? insumo.id ?? index + 1;
+        const stockActual = obtenerStockInsumo(insumo);
+        const stockMinimo = obtenerStockMinimoInsumo(insumo);
+        const esCritico = stockActual <= stockMinimo;
+        const sinStock = stockActual <= 0;
+
+        return {
+          id,
+          codigo: obtenerTextoInsumo(
+            insumo,
+            ["codigo", "codigo_insumo"],
+            `INS-${String(id).padStart(4, "0")}`
+          ),
+          nombre: obtenerTextoInsumo(
+            insumo,
+            ["nombre", "nombre_insumo", "descripcion", "descripcion_insumo"],
+            "Sin nombre"
+          ),
+          categoria: obtenerTextoInsumo(insumo, ["categoria", "tipo", "grupo"], "General"),
+          unidadMedida: obtenerTextoInsumo(insumo, ["unidad_medida", "unidad", "u_medida"], "und"),
+          stockActual,
+          stockMinimo,
+          esCritico,
+          estado: sinStock ? "Sin stock" : esCritico ? "Crítico" : "Disponible",
+          estadoTipo: sinStock ? "agotado" : esCritico ? "critico" : "disponible",
+          original: insumo,
+        };
+      })
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }, [insumosBackend]);
+
   const inventarioResumido = useMemo(() => {
-    const totalStock = insumosBackend.reduce(
-      (total, insumo) => total + obtenerStockInsumo(insumo),
+    const totalStock = insumosDetalle.reduce(
+      (total, insumo) => total + insumo.stockActual,
       0
     );
-
-    const bajos = insumosBackend.filter(
-      (insumo) =>
-        obtenerStockInsumo(insumo) <= obtenerStockMinimoInsumo(insumo)
-    ).length;
+    const insumosCriticos = insumosDetalle.filter((insumo) => insumo.esCritico).length;
 
     return {
       totalStock,
-      totalInsumos: insumosBackend.length,
-      insumosCriticos: bajos,
+      totalInsumos: insumosDetalle.length,
+      insumosCriticos,
+      insumosAdecuados: Math.max(0, insumosDetalle.length - insumosCriticos),
     };
-  }, [insumosBackend]);
+  }, [insumosDetalle]);
 
-  const insumosCriticosDetalle = useMemo(() => {
-    return insumosBackend
-      .map((insumo) => ({
-        codigo: obtenerTextoInsumo(insumo, ["codigo", "codigo_insumo", "codigo_pedido"], "Sin código"),
-        nombre: obtenerTextoInsumo(insumo, ["nombre", "nombre_insumo", "descripcion", "descripcion_insumo"], "Sin nombre"),
-        categoria: obtenerTextoInsumo(insumo, ["categoria", "tipo", "grupo"], "Sin categoría"),
-        unidadMedida: obtenerTextoInsumo(insumo, ["unidad_medida", "unidad", "u_medida"], "und"),
-        stockActual: obtenerStockInsumo(insumo),
-        stockMinimo: obtenerStockMinimoInsumo(insumo),
-        estado: obtenerTextoInsumo(insumo, ["estado", "status", "condicion"], "Sin estado"),
-      }))
-      .sort((a, b) => a.stockActual - b.stockActual)
-      .slice(0, 8);
-  }, [insumosBackend]);
+  const insumosCriticosDetalle = useMemo(
+    () => insumosDetalle.filter((insumo) => insumo.esCritico),
+    [insumosDetalle]
+  );
 
   const insumosFiltrados = useMemo(() => {
     const termino = busquedaInsumos.trim().toLowerCase();
-    if (!termino) return insumosCriticosDetalle;
+    if (!termino) return insumosDetalle;
 
-    return insumosCriticosDetalle.filter((insumo) =>
+    return insumosDetalle.filter((insumo) =>
       insumo.codigo.toLowerCase().includes(termino) ||
       insumo.nombre.toLowerCase().includes(termino) ||
-      insumo.categoria.toLowerCase().includes(termino)
+      insumo.categoria.toLowerCase().includes(termino) ||
+      insumo.estado.toLowerCase().includes(termino)
     );
-  }, [insumosCriticosDetalle, busquedaInsumos]);
+  }, [insumosDetalle, busquedaInsumos]);
 
   const maquilasDisponibles = useMemo(
     () => maquilasBackend.length,
@@ -1595,6 +2180,106 @@ function SupervisorDashboard({ usuario, onLogout }) {
     [controlCalidadBackend]
   );
 
+  const controlesCalidadDetalle = useMemo(() => {
+    return controlCalidadBackend
+      .map((item, indice) => {
+        const idPedido = item.id_pedido ?? item.pedido?.id_pedido ?? item.pedido?.id;
+        const pedido = pedidos.find(
+          (registro) => String(registro.id) === String(idPedido)
+        );
+        const cantidadBuena = Number(item.cantidad_buena ?? 0);
+        const cantidadDefectuosa = Number(item.cantidad_defectuosa ?? 0);
+        const totalRevisado = cantidadBuena + cantidadDefectuosa;
+
+        return {
+          id: item.id_control ?? item.id ?? `qc-${indice}`,
+          idPedido,
+          pedido,
+          codigoPedido: pedido?.codigo || `Pedido #${idPedido || "N/A"}`,
+          prenda: pedido?.tipoPrenda || "Sin datos",
+          cantidadPedido: Number(pedido?.cantidad || 0),
+          fechaRevisionISO: fechaParaInput(item.fecha_revision),
+          fechaRevision: formatearFecha(item.fecha_revision),
+          cantidadBuena,
+          cantidadDefectuosa,
+          totalRevisado,
+          observaciones: obtenerTexto(item.observaciones, "Sin observaciones"),
+          resultado: cantidadDefectuosa > 0 ? "Con novedades" : "Aprobado",
+          original: item,
+        };
+      })
+      .sort((a, b) => {
+        const fecha = String(b.fechaRevisionISO || "").localeCompare(
+          String(a.fechaRevisionISO || "")
+        );
+        if (fecha !== 0) return fecha;
+        return Number(b.id || 0) - Number(a.id || 0);
+      });
+  }, [controlCalidadBackend, pedidos]);
+
+  const controlesCalidadFiltrados = useMemo(() => {
+    const termino = busquedaControlCalidad.trim().toLowerCase();
+    if (!termino) return controlesCalidadDetalle;
+
+    return controlesCalidadDetalle.filter((item) =>
+      item.codigoPedido.toLowerCase().includes(termino) ||
+      item.prenda.toLowerCase().includes(termino) ||
+      item.resultado.toLowerCase().includes(termino) ||
+      item.observaciones.toLowerCase().includes(termino)
+    );
+  }, [controlesCalidadDetalle, busquedaControlCalidad]);
+
+  const estadisticasControlCalidad = useMemo(() => {
+    return controlesCalidadDetalle.reduce(
+      (resultado, item) => {
+        resultado.revisiones += 1;
+        resultado.buenas += item.cantidadBuena;
+        resultado.defectuosas += item.cantidadDefectuosa;
+        resultado.revisadas += item.totalRevisado;
+        return resultado;
+      },
+      { revisiones: 0, buenas: 0, defectuosas: 0, revisadas: 0 }
+    );
+  }, [controlesCalidadDetalle]);
+
+  const porcentajeCalidad = useMemo(() => {
+    if (!estadisticasControlCalidad.revisadas) return 0;
+    return Math.round(
+      (estadisticasControlCalidad.buenas / estadisticasControlCalidad.revisadas) * 100
+    );
+  }, [estadisticasControlCalidad]);
+
+  const pedidoControlSeleccionado = useMemo(() => {
+    return pedidos.find(
+      (pedido) => String(pedido.id) === String(formularioControlCalidad.id_pedido)
+    ) || null;
+  }, [pedidos, formularioControlCalidad.id_pedido]);
+
+  const unidadesRevisadasPedidoSeleccionado = useMemo(() => {
+    if (!formularioControlCalidad.id_pedido) return 0;
+
+    return controlesCalidadDetalle
+      .filter(
+        (item) =>
+          String(item.idPedido) === String(formularioControlCalidad.id_pedido) &&
+          (!controlCalidadEditar || String(item.id) !== String(controlCalidadEditar.id))
+      )
+      .reduce((total, item) => total + item.totalRevisado, 0);
+  }, [
+    controlesCalidadDetalle,
+    formularioControlCalidad.id_pedido,
+    controlCalidadEditar,
+  ]);
+
+  const saldoPendienteControlCalidad = useMemo(() => {
+    if (!pedidoControlSeleccionado) return null;
+    return Math.max(
+      0,
+      Number(pedidoControlSeleccionado.cantidad || 0) -
+        unidadesRevisadasPedidoSeleccionado
+    );
+  }, [pedidoControlSeleccionado, unidadesRevisadasPedidoSeleccionado]);
+
   const totalInformes = useMemo(
     () => informesBackend.length,
     [informesBackend]
@@ -1603,6 +2288,104 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const totalArchivos = useMemo(
     () => archivosBackend.length,
     [archivosBackend]
+  );
+
+
+  const informesDetalle = useMemo(() => {
+    return informesBackend
+      .map((item, indice) => {
+        const idPedido = item.id_pedido ?? item.pedido?.id_pedido ?? item.pedido?.id;
+        const pedido = pedidos.find(
+          (registro) => String(registro.id) === String(idPedido)
+        );
+
+        return {
+          id: item.id_informe ?? item.id ?? `informe-${indice}`,
+          idPedido,
+          pedido,
+          codigoPedido: pedido?.codigo || `Pedido #${idPedido || "N/A"}`,
+          prenda: pedido?.tipoPrenda || "Sin datos",
+          maquila: pedido?.maquila || "Sin asignar",
+          fechaGeneracion: formatearFecha(item.fecha_generacion),
+          fechaGeneracionISO: fechaParaInput(item.fecha_generacion),
+          tiempoPlanificado: Number(item.tiempo_planificado ?? 0),
+          tiempoReal: Number(item.tiempo_real ?? 0),
+          porcentajeCumplimiento: Number(item.porcentaje_cumplimiento ?? 0),
+          observaciones: obtenerTexto(item.observaciones_generales, "Sin observaciones"),
+          rutaPdf: obtenerTexto(item.ruta_pdf, ""),
+          original: item,
+        };
+      })
+      .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+  }, [informesBackend, pedidos]);
+
+  const informesFiltrados = useMemo(() => {
+    const termino = busquedaInformes.trim().toLowerCase();
+    if (!termino) return informesDetalle;
+
+    return informesDetalle.filter((item) =>
+      item.codigoPedido.toLowerCase().includes(termino) ||
+      item.prenda.toLowerCase().includes(termino) ||
+      item.maquila.toLowerCase().includes(termino) ||
+      item.observaciones.toLowerCase().includes(termino)
+    );
+  }, [informesDetalle, busquedaInformes]);
+
+  const estadisticasInformes = useMemo(() => {
+    if (informesDetalle.length === 0) {
+      return { total: 0, promedioCumplimiento: 0, conRuta: 0 };
+    }
+
+    const suma = informesDetalle.reduce(
+      (total, item) => total + Number(item.porcentajeCumplimiento || 0),
+      0
+    );
+
+    return {
+      total: informesDetalle.length,
+      promedioCumplimiento: Math.round(suma / informesDetalle.length),
+      conRuta: informesDetalle.filter((item) => item.rutaPdf).length,
+    };
+  }, [informesDetalle]);
+
+  const archivosDetalle = useMemo(() => {
+    return archivosBackend
+      .map((item, indice) => {
+        const idPedido = item.id_pedido ?? item.pedido?.id_pedido ?? item.pedido?.id;
+        const pedido = pedidos.find(
+          (registro) => String(registro.id) === String(idPedido)
+        );
+
+        return {
+          id: item.id_archivo ?? item.id ?? `archivo-${indice}`,
+          idPedido,
+          pedido,
+          codigoPedido: pedido?.codigo || (idPedido ? `Pedido #${idPedido}` : "Sin pedido"),
+          prenda: pedido?.tipoPrenda || "Sin datos",
+          nombre: obtenerTexto(item.nombre_archivo ?? item.nombre ?? item.archivo, `Archivo ${indice + 1}`),
+          ruta: obtenerTexto(item.ruta_archivo ?? item.ruta ?? item.url, ""),
+          fechaSubida: formatearFecha(item.fecha_subida),
+          original: item,
+        };
+      })
+      .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+  }, [archivosBackend, pedidos]);
+
+  const archivosFiltrados = useMemo(() => {
+    const termino = busquedaArchivos.trim().toLowerCase();
+    if (!termino) return archivosDetalle;
+
+    return archivosDetalle.filter((item) =>
+      item.nombre.toLowerCase().includes(termino) ||
+      item.codigoPedido.toLowerCase().includes(termino) ||
+      item.prenda.toLowerCase().includes(termino) ||
+      item.ruta.toLowerCase().includes(termino)
+    );
+  }, [archivosDetalle, busquedaArchivos]);
+
+  const archivosAsociados = useMemo(
+    () => archivosDetalle.filter((item) => item.idPedido).length,
+    [archivosDetalle]
   );
 
   const datosTendencia = useMemo(
@@ -1811,6 +2594,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
 
   const abrirEditarPedido = (pedido = null) => {
+    if (!esSupervisor) return;
     setModalEditarAbierto(true);
     setBusquedaEditar("");
     setPedidoEditar(pedido);
@@ -1822,6 +2606,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
   };
 
   const abrirEliminarPedido = (pedido = null) => {
+    if (!esSupervisor) return;
     setModalEliminarAbierto(true);
     setBusquedaEliminar("");
     setPedidoEliminar(pedido);
@@ -1836,8 +2621,15 @@ function SupervisorDashboard({ usuario, onLogout }) {
   };
 
   const abrirCrearUsuario = (rol) => {
+    if (!esSupervisor) return;
     setRolNuevoUsuario(rol);
     setModalUsuariosAbierto(true);
+  };
+
+  const abrirListaMaquilas = () => {
+    if (!esSupervisor) return;
+    setModalListaMaquilasAbierto(true);
+    setSidebarAbierto(false);
   };
 
   const abrirModalEstado = (tipo) => {
@@ -1861,6 +2653,11 @@ function SupervisorDashboard({ usuario, onLogout }) {
   ===================================================== */
 
   const actualizarProgreso = async (pedido, porcentaje) => {
+    if (!esSupervisor) {
+      setError("Solo los supervisores pueden actualizar el progreso de los pedidos.");
+      return;
+    }
+
     const nuevoProgreso = Number(porcentaje);
 
     if (Number.isNaN(nuevoProgreso)) {
@@ -1877,6 +2674,24 @@ function SupervisorDashboard({ usuario, onLogout }) {
       };
 
       await actualizarPedidoDisponible(pedido.id, payload);
+
+      // Reflejo inmediato en pantalla mientras se refresca la información real del backend.
+      setPedidosBackend((actuales) =>
+        actuales.map((item, indice) => {
+          const normalizado = normalizarPedido(item, indice);
+          return pedidosCoinciden(normalizado, pedido)
+            ? { ...item, progreso: nuevoProgreso, porcentaje: nuevoProgreso, avance: nuevoProgreso }
+            : item;
+        })
+      );
+      setSeguimientos((actuales) =>
+        actuales.map((item, indice) => {
+          const normalizado = normalizarPedido(item, indice);
+          return pedidosCoinciden(normalizado, pedido)
+            ? { ...item, progreso: nuevoProgreso, porcentaje: nuevoProgreso, avance: nuevoProgreso }
+            : item;
+        })
+      );
 
       setMensaje(
         `El progreso del pedido ${pedido.codigo} fue actualizado correctamente.`
@@ -1933,6 +2748,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
   const guardarEdicion = async (event) => {
     event.preventDefault();
+    if (!esSupervisor) return;
 
     if (!pedidoEditar) {
       setErrorEditar("Primero seleccione el pedido que desea editar.");
@@ -1958,10 +2774,40 @@ function SupervisorDashboard({ usuario, onLogout }) {
     }
 
     if (
-      formularioEditar.id_maquila !== "" &&
+      formularioEditar.id_maquila === "" ||
       Number(formularioEditar.id_maquila) <= 0
     ) {
-      setErrorEditar("El ID de maquila debe ser mayor que cero.");
+      setErrorEditar("La maquila es obligatoria y su ID debe ser mayor que cero.");
+      return;
+    }
+
+    if (!formularioEditar.talla.trim()) {
+      setErrorEditar("La talla es obligatoria.");
+      return;
+    }
+
+    if (!formularioEditar.color.trim()) {
+      setErrorEditar("El color es obligatorio.");
+      return;
+    }
+
+    if (!formularioEditar.fecha_ingreso || !formularioEditar.fecha_entrega) {
+      setErrorEditar("Las fechas de ingreso y entrega son obligatorias.");
+      return;
+    }
+
+    if (formularioEditar.fecha_entrega < formularioEditar.fecha_ingreso) {
+      setErrorEditar("La fecha de entrega no puede ser anterior a la fecha de ingreso.");
+      return;
+    }
+
+    if (!formularioEditar.prioridad || !formularioEditar.estado) {
+      setErrorEditar("Prioridad y estado son obligatorios.");
+      return;
+    }
+
+    if (!formularioEditar.observaciones.trim()) {
+      setErrorEditar("Las observaciones son obligatorias.");
       return;
     }
 
@@ -1993,6 +2839,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
   };
 
   const eliminarPedido = async () => {
+    if (!esSupervisor) return;
     if (!pedidoEliminar) return;
 
     setEliminando(true);
@@ -2014,6 +2861,676 @@ function SupervisorDashboard({ usuario, onLogout }) {
     }
   };
 
+  const abrirNuevoInsumo = () => {
+    if (!esSupervisor) return;
+    setFormularioInsumo(FORMULARIO_INSUMO_VACIO);
+    setErrorInsumo("");
+    setModalInsumoAbierto(true);
+    setMenuCrearAbierto(false);
+  };
+
+  const abrirConteoInsumo = (insumo = null) => {
+    if (!esSupervisor) return;
+    const seleccionado = insumo || insumosDetalle[0] || null;
+    setFormularioConteoInsumo({
+      id_insumo: seleccionado ? String(seleccionado.id) : "",
+      stock_actual: seleccionado ? String(seleccionado.stockActual) : "",
+      stock_minimo: seleccionado ? String(seleccionado.stockMinimo) : "",
+    });
+    setErrorInsumo("");
+    setModalConteoInsumoAbierto(true);
+  };
+
+  const abrirSalidaInsumo = (insumo = null) => {
+    if (!esSupervisor) return;
+    const seleccionado = insumo || insumosDetalle[0] || null;
+    setFormularioSalidaInsumo({
+      ...FORMULARIO_SALIDA_INSUMO_VACIO,
+      id_insumo: seleccionado ? String(seleccionado.id) : "",
+      fecha_envio: new Date().toISOString().slice(0, 10),
+    });
+    setErrorInsumo("");
+    setModalSalidaInsumoAbierto(true);
+  };
+
+  const guardarNuevoInsumo = async (event) => {
+    event.preventDefault();
+    if (!esSupervisor) return;
+
+    if (!formularioInsumo.nombre_insumo.trim()) {
+      setErrorInsumo("El nombre del insumo es obligatorio.");
+      return;
+    }
+
+    if (!formularioInsumo.unidad_medida.trim()) {
+      setErrorInsumo("La unidad de medida es obligatoria.");
+      return;
+    }
+
+    if (formularioInsumo.stock_actual === "" || formularioInsumo.stock_minimo === "") {
+      setErrorInsumo("Stock inicial y stock mínimo son obligatorios.");
+      return;
+    }
+
+    const stockActual = Number(formularioInsumo.stock_actual);
+    const stockMinimo = Number(formularioInsumo.stock_minimo);
+    if (Number.isNaN(stockActual) || Number.isNaN(stockMinimo) || stockActual < 0 || stockMinimo < 0) {
+      setErrorInsumo("Los valores de stock deben ser números iguales o mayores que cero.");
+      return;
+    }
+
+    setGuardandoInsumo(true);
+    setErrorInsumo("");
+
+    try {
+      await crearInsumoDisponible({
+        nombre_insumo: formularioInsumo.nombre_insumo.trim(),
+        unidad_medida: formularioInsumo.unidad_medida.trim(),
+        stock_actual: stockActual,
+        stock_minimo: stockMinimo,
+      });
+      setModalInsumoAbierto(false);
+      setMensaje("Insumo registrado correctamente.");
+      await cargarInformacion(false);
+      window.requestAnimationFrame(() => irASeccion("seccion-insumos"));
+    } catch (err) {
+      setErrorInsumo(obtenerMensajeError(err, "No se pudo registrar el insumo."));
+    } finally {
+      setGuardandoInsumo(false);
+    }
+  };
+
+  const guardarConteoInsumo = async (event) => {
+    event.preventDefault();
+    if (!esSupervisor) return;
+    const idInsumo = Number(formularioConteoInsumo.id_insumo);
+    if (formularioConteoInsumo.stock_actual === "" || formularioConteoInsumo.stock_minimo === "") {
+      setErrorInsumo("Stock contado y stock mínimo son obligatorios.");
+      return;
+    }
+
+    const stockActual = Number(formularioConteoInsumo.stock_actual);
+    const stockMinimo = Number(formularioConteoInsumo.stock_minimo);
+
+    if (!idInsumo) {
+      setErrorInsumo("Seleccione un insumo.");
+      return;
+    }
+    if (Number.isNaN(stockActual) || Number.isNaN(stockMinimo) || stockActual < 0 || stockMinimo < 0) {
+      setErrorInsumo("Ingrese valores de stock válidos.");
+      return;
+    }
+
+    setGuardandoInsumo(true);
+    setErrorInsumo("");
+    try {
+      await actualizarInsumoDisponible(idInsumo, {
+        stock_actual: stockActual,
+        stock_minimo: stockMinimo,
+      });
+      setModalConteoInsumoAbierto(false);
+      setMensaje("Conteo de inventario actualizado correctamente.");
+      await cargarInformacion(false);
+    } catch (err) {
+      setErrorInsumo(obtenerMensajeError(err, "No se pudo actualizar el conteo."));
+    } finally {
+      setGuardandoInsumo(false);
+    }
+  };
+
+  const guardarSalidaInsumo = async (event) => {
+    event.preventDefault();
+    if (!esSupervisor) return;
+    const idInsumo = Number(formularioSalidaInsumo.id_insumo);
+    const cantidad = Number(formularioSalidaInsumo.cantidad);
+
+    if (!idInsumo) {
+      setErrorInsumo("Seleccione un insumo.");
+      return;
+    }
+    if (!cantidad || cantidad <= 0) {
+      setErrorInsumo("La cantidad de salida debe ser mayor que cero.");
+      return;
+    }
+    if (!formularioSalidaInsumo.fecha_envio) {
+      setErrorInsumo("La fecha de salida es obligatoria.");
+      return;
+    }
+
+    setGuardandoInsumo(true);
+    setErrorInsumo("");
+    try {
+      await registrarSalidaInsumoDisponible({
+        id_insumo: idInsumo,
+        id_pedido: formularioSalidaInsumo.id_pedido
+          ? Number(formularioSalidaInsumo.id_pedido)
+          : null,
+        cantidad,
+        fecha_envio: formularioSalidaInsumo.fecha_envio || new Date().toISOString().slice(0, 10),
+      });
+      setModalSalidaInsumoAbierto(false);
+      setMensaje("Salida de insumo registrada y stock descontado correctamente.");
+      await cargarInformacion(false);
+    } catch (err) {
+      setErrorInsumo(obtenerMensajeError(err, "No se pudo registrar la salida del insumo."));
+    } finally {
+      setGuardandoInsumo(false);
+    }
+  };
+
+  const abrirNuevoControlCalidad = (pedido = null) => {
+    if (!esSupervisor) {
+      setError("Solo los supervisores pueden registrar controles de calidad.");
+      return;
+    }
+    const seleccionado = pedido || pedidoSeleccionado || pedidos[0] || null;
+    setControlCalidadEditar(null);
+    setFormularioControlCalidad({
+      ...FORMULARIO_CONTROL_CALIDAD_VACIO,
+      id_pedido: seleccionado ? String(seleccionado.id) : "",
+      fecha_revision: new Date().toISOString().slice(0, 10),
+    });
+    setErrorControlCalidad("");
+    setModalControlCalidadAbierto(true);
+    setMenuCrearAbierto(false);
+  };
+
+  const abrirEditarControlCalidad = (control) => {
+    if (!esSupervisor) return;
+    setControlCalidadEditar(control);
+    setFormularioControlCalidad({
+      id_pedido: control.idPedido ? String(control.idPedido) : "",
+      fecha_revision: control.fechaRevisionISO || new Date().toISOString().slice(0, 10),
+      cantidad_buena: String(control.cantidadBuena ?? 0),
+      cantidad_defectuosa: String(control.cantidadDefectuosa ?? 0),
+      observaciones:
+        control.observaciones === "Sin observaciones" ? "" : control.observaciones || "",
+    });
+    setErrorControlCalidad("");
+    setModalControlCalidadAbierto(true);
+  };
+
+  const cerrarModalControlCalidad = () => {
+    if (guardandoControlCalidad) return;
+    setModalControlCalidadAbierto(false);
+    setControlCalidadEditar(null);
+    setFormularioControlCalidad(FORMULARIO_CONTROL_CALIDAD_VACIO);
+    setErrorControlCalidad("");
+  };
+
+  const guardarControlCalidad = async (event) => {
+    event.preventDefault();
+    if (!esSupervisor) return;
+
+    const idPedido = Number(formularioControlCalidad.id_pedido);
+    const cantidadBuena = Number(formularioControlCalidad.cantidad_buena || 0);
+    const cantidadDefectuosa = Number(
+      formularioControlCalidad.cantidad_defectuosa || 0
+    );
+    const totalRevision = cantidadBuena + cantidadDefectuosa;
+
+    if (!idPedido) {
+      setErrorControlCalidad("Seleccione el pedido que se está revisando.");
+      return;
+    }
+
+    if (!formularioControlCalidad.fecha_revision) {
+      setErrorControlCalidad("La fecha de revisión es obligatoria.");
+      return;
+    }
+
+    if (cantidadBuena < 0 || cantidadDefectuosa < 0) {
+      setErrorControlCalidad("Las cantidades no pueden ser negativas.");
+      return;
+    }
+
+    if (totalRevision <= 0) {
+      setErrorControlCalidad("Debe registrar al menos una unidad revisada.");
+      return;
+    }
+
+    if (!formularioControlCalidad.observaciones.trim()) {
+      setErrorControlCalidad("Las observaciones son obligatorias.");
+      return;
+    }
+
+    if (
+      saldoPendienteControlCalidad !== null &&
+      totalRevision > saldoPendienteControlCalidad
+    ) {
+      setErrorControlCalidad(
+        `La revisión supera las unidades pendientes del pedido. Disponibles para revisar: ${saldoPendienteControlCalidad}.`
+      );
+      return;
+    }
+
+    const payload = {
+      id_pedido: idPedido,
+      fecha_revision: formularioControlCalidad.fecha_revision,
+      cantidad_buena: cantidadBuena,
+      cantidad_defectuosa: cantidadDefectuosa,
+      observaciones: formularioControlCalidad.observaciones.trim() || null,
+    };
+
+    setGuardandoControlCalidad(true);
+    setErrorControlCalidad("");
+
+    try {
+      if (controlCalidadEditar) {
+        await actualizarControlCalidadDisponible(controlCalidadEditar.id, payload);
+        setMensaje("Control de calidad actualizado correctamente.");
+      } else {
+        await crearControlCalidadDisponible(payload);
+        setMensaje("Control de calidad registrado correctamente.");
+      }
+
+      setModalControlCalidadAbierto(false);
+      setControlCalidadEditar(null);
+      setFormularioControlCalidad(FORMULARIO_CONTROL_CALIDAD_VACIO);
+      await cargarInformacion(false);
+      window.requestAnimationFrame(() => irASeccion("seccion-control-calidad"));
+    } catch (err) {
+      setErrorControlCalidad(
+        obtenerMensajeError(err, "No se pudo guardar el control de calidad.")
+      );
+    } finally {
+      setGuardandoControlCalidad(false);
+    }
+  };
+
+  const eliminarControlCalidad = async (control) => {
+    if (!esSupervisor) return;
+    if (!control?.id) return;
+
+    const confirmado = window.confirm(
+      `¿Eliminar la revisión de calidad de ${control.codigoPedido}?`
+    );
+    if (!confirmado) return;
+
+    setEliminandoControlCalidadId(control.id);
+    setError("");
+
+    try {
+      await eliminarControlCalidadDisponible(control.id);
+      setMensaje("Control de calidad eliminado correctamente.");
+      await cargarInformacion(false);
+    } catch (err) {
+      setError(
+        obtenerMensajeError(err, "No se pudo eliminar el control de calidad.")
+      );
+    } finally {
+      setEliminandoControlCalidadId(null);
+    }
+  };
+
+
+  const abrirGenerarInforme = (pedido = null) => {
+    if (!esSupervisor) {
+      setError("Solo los supervisores pueden generar nuevos informes. Como consultor puede visualizar y descargar los informes existentes.");
+      return;
+    }
+    const seleccionado = pedido || pedidoSeleccionado || pedidos[0] || null;
+    const codigoInicial = seleccionado?.codigo || "";
+    setFormularioInforme({
+      ...FORMULARIO_INFORME_VACIO,
+      codigo_pedido: codigoInicial,
+      nombre_archivo: codigoInicial ? nombrePdfSugerido(codigoInicial) : "",
+    });
+    setInformeDetalle(null);
+    setErrorInforme("");
+    setModalInformeAbierto(true);
+    setMenuCrearAbierto(false);
+  };
+
+  const cerrarModalInforme = () => {
+    if (generandoInforme) return;
+    setModalInformeAbierto(false);
+    setFormularioInforme(FORMULARIO_INFORME_VACIO);
+    setInformeDetalle(null);
+    setErrorInforme("");
+  };
+
+  const generarInforme = async (event) => {
+    event?.preventDefault?.();
+    if (!esSupervisor) return;
+    const codigo = formularioInforme.codigo_pedido.trim();
+
+    if (!codigo) {
+      setErrorInforme("Seleccione el pedido para generar el informe.");
+      return;
+    }
+
+    const accion = formularioInforme.accion_salida || "guardar_pdf";
+    const nombrePdf = limpiarNombreArchivo(
+      formularioInforme.nombre_archivo || nombrePdfSugerido(codigo)
+    );
+
+    let destinoPdf = null;
+    if (accion === "guardar_pdf" && typeof window.showSaveFilePicker === "function") {
+      try {
+        destinoPdf = await seleccionarDestinoPdf(nombrePdf);
+      } catch (err) {
+        if (err?.name === "AbortError") {
+          setErrorInforme("No se seleccionó una ubicación para guardar el PDF.");
+          return;
+        }
+        setErrorInforme(
+          "No se pudo abrir el selector de carpetas. Puede generar el informe y usar el botón Guardar PDF en..."
+        );
+        return;
+      }
+    }
+
+    setGenerandoInforme(true);
+    setErrorInforme("");
+
+    try {
+      const respuesta = await crearInformePorCodigoDisponible({
+        codigo_pedido: codigo,
+        // El navegador no permite revelar la ruta completa del equipo por seguridad.
+        // Guardamos únicamente el nombre del PDF asociado al informe.
+        ruta_pdf: accion === "guardar_pdf" ? nombrePdf : null,
+      });
+
+      const detalle = respuesta.data;
+      setInformeDetalle(detalle);
+      setFormularioInforme((actual) => ({
+        ...actual,
+        nombre_archivo: nombrePdf,
+      }));
+
+      if (accion === "guardar_pdf") {
+        const blob = construirPdfInforme(detalle, codigo);
+        if (destinoPdf) {
+          await escribirPdfEnDestino(destinoPdf, blob);
+          setMensaje(`Informe ${codigo} generado y guardado como ${destinoPdf.name}.`);
+        } else {
+          descargarPdf(blob, nombrePdf);
+          setMensaje(`Informe ${codigo} generado. El PDF se envió a Descargas.`);
+        }
+      } else {
+        setMensaje(`Informe del pedido ${codigo} generado correctamente.`);
+      }
+
+      await cargarInformacion(false);
+    } catch (err) {
+      console.error("Error generando informe:", err);
+      setErrorInforme(
+        obtenerMensajeError(
+          err,
+          "No se pudo generar el informe. Verifique que FastAPI esté activo y que /informes/codigo responda correctamente."
+        )
+      );
+    } finally {
+      setGenerandoInforme(false);
+    }
+  };
+
+  const abrirDetalleInforme = async (informe) => {
+    const codigo = informe?.pedido?.codigo || informe?.codigoPedido;
+    if (!codigo || String(codigo).startsWith("Pedido #")) {
+      setError("No se pudo identificar el código del pedido de este informe.");
+      return;
+    }
+
+    setFormularioInforme({
+      ...FORMULARIO_INFORME_VACIO,
+      codigo_pedido: codigo,
+      nombre_archivo: limpiarNombreArchivo(
+        informe?.rutaPdf || nombrePdfSugerido(codigo)
+      ),
+      accion_salida: "vista_previa",
+    });
+    setInformeDetalle(null);
+    setErrorInforme("");
+    setModalInformeAbierto(true);
+    setGenerandoInforme(true);
+
+    try {
+      const respuesta = await obtenerInformePorCodigoDisponible(codigo);
+      setInformeDetalle(respuesta.data);
+    } catch (err) {
+      setErrorInforme(
+        obtenerMensajeError(err, "No se pudo consultar el detalle del informe.")
+      );
+    } finally {
+      setGenerandoInforme(false);
+    }
+  };
+
+  const eliminarInforme = async (informe) => {
+    if (!esSupervisor) return;
+    if (!informe?.id) return;
+    if (!window.confirm(`¿Eliminar el informe de ${informe.codigoPedido}?`)) return;
+
+    setEliminandoInformeId(informe.id);
+    setError("");
+    try {
+      await eliminarInformeDisponible(informe.id);
+      setMensaje("Informe eliminado correctamente.");
+      await cargarInformacion(false);
+    } catch (err) {
+      setError(obtenerMensajeError(err, "No se pudo eliminar el informe."));
+    } finally {
+      setEliminandoInformeId(null);
+    }
+  };
+
+  const guardarPdfEnEquipo = async (detalle) => {
+    if (!detalle) return;
+
+    const codigo =
+      detalle?.pedido?.codigo_pedido ||
+      formularioInforme.codigo_pedido ||
+      "pedido";
+    const nombre = limpiarNombreArchivo(
+      formularioInforme.nombre_archivo ||
+        detalle?.ruta_pdf ||
+        nombrePdfSugerido(codigo)
+    );
+    const blob = construirPdfInforme(detalle, codigo);
+
+    try {
+      if (typeof window.showSaveFilePicker === "function") {
+        const handle = await seleccionarDestinoPdf(nombre);
+        await escribirPdfEnDestino(handle, blob);
+        setFormularioInforme((actual) => ({
+          ...actual,
+          nombre_archivo: handle.name,
+        }));
+        setMensaje(`PDF guardado correctamente como ${handle.name}.`);
+        return;
+      }
+
+      descargarPdf(blob, nombre);
+      setMensaje(
+        "PDF descargado. Su navegador no permite seleccionar carpeta directamente; revise la carpeta Descargas o active 'Preguntar dónde guardar cada archivo'."
+      );
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      console.error("Error guardando PDF:", err);
+      setErrorInforme("No se pudo guardar el PDF en el equipo.");
+    }
+  };
+
+  const imprimirInforme = (detalle) => {
+    if (!detalle) return;
+
+    const pedido = detalle.pedido || {};
+    const maquila = detalle.maquila || {};
+    const fase = detalle.fase_actual || {};
+    const seguimientosInforme = Array.isArray(detalle.seguimientos)
+      ? detalle.seguimientos
+      : [];
+
+    const codigo = pedido.codigo_pedido || formularioInforme.codigo_pedido || "Sin código";
+    const prenda = pedido.tipo_prenda || pedido.nombre_prenda || "Sin especificar";
+    const nombreMaquila =
+      maquila.nombre_maquila || maquila.nombre || pedido.id_maquila || "Sin asignar";
+    const faseActual = fase.nombre_fase || fase.nombre || "Sin fase registrada";
+
+    const filasSeguimiento = seguimientosInforme.length
+      ? seguimientosInforme
+          .map((seg, indice) => `
+            <tr>
+              <td>${indice + 1}</td>
+              <td>${escaparHtml(seg.fecha_inicio || "-")}</td>
+              <td>${escaparHtml(seg.fecha_fin || "-")}</td>
+              <td>${escaparHtml(seg.porcentaje_avance ?? 0)}%</td>
+              <td>${escaparHtml(seg.observacion || "-")}</td>
+            </tr>`)
+          .join("")
+      : '<tr><td colspan="5">Sin seguimientos registrados.</td></tr>';
+
+    const ventana = window.open("", "_blank", "width=900,height=720");
+    if (!ventana) {
+      setErrorInforme("El navegador bloqueó la ventana de impresión. Habilite las ventanas emergentes.");
+      return;
+    }
+
+    ventana.document.write(`<!doctype html>
+      <html lang="es">
+        <head>
+          <meta charset="utf-8" />
+          <title>Informe ${escaparHtml(codigo)}</title>
+          <style>
+            body{font-family:Arial,sans-serif;color:#17243a;margin:36px;font-size:12px}
+            h1{font-size:22px;margin:0;color:#0757a6} h2{font-size:15px;margin-top:26px}
+            .sub{color:#667085;margin:6px 0 24px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+            .box{border:1px solid #dfe5ed;border-radius:8px;padding:11px}.box span{display:block;color:#667085;font-size:10px}.box strong{display:block;margin-top:4px;font-size:13px}
+            table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #dfe5ed;padding:8px;text-align:left}th{background:#f3f6fa}
+            .obs{white-space:pre-wrap;border:1px solid #dfe5ed;background:#f8fafc;border-radius:8px;padding:12px;min-height:50px}
+            @media print{body{margin:18mm}.no-print{display:none}}
+          </style>
+        </head>
+        <body>
+          <h1>Maquila System EC</h1>
+          <div class="sub">Informe de seguimiento de producción · ${escaparHtml(codigo)}</div>
+          <div class="grid">
+            <div class="box"><span>Pedido</span><strong>${escaparHtml(codigo)}</strong></div>
+            <div class="box"><span>Prenda</span><strong>${escaparHtml(prenda)}</strong></div>
+            <div class="box"><span>Maquila</span><strong>${escaparHtml(nombreMaquila)}</strong></div>
+            <div class="box"><span>Fase actual</span><strong>${escaparHtml(faseActual)}</strong></div>
+            <div class="box"><span>Tiempo planificado</span><strong>${escaparHtml(detalle.tiempo_planificado ?? 0)} días</strong></div>
+            <div class="box"><span>Tiempo real</span><strong>${escaparHtml(detalle.tiempo_real ?? 0)} días</strong></div>
+            <div class="box"><span>Cumplimiento</span><strong>${escaparHtml(detalle.porcentaje_cumplimiento ?? 0)}%</strong></div>
+            <div class="box"><span>Generado</span><strong>${escaparHtml(formatearFecha(detalle.fecha_generacion))}</strong></div>
+          </div>
+          <h2>Observaciones generales</h2>
+          <div class="obs">${escaparHtml(detalle.observaciones_generales || "Sin observaciones")}</div>
+          <h2>Seguimientos</h2>
+          <table>
+            <thead><tr><th>#</th><th>Inicio</th><th>Fin</th><th>Avance</th><th>Observación</th></tr></thead>
+            <tbody>${filasSeguimiento}</tbody>
+          </table>
+          <script>window.onload=()=>{window.print();}</script>
+        </body>
+      </html>`);
+    ventana.document.close();
+  };
+
+  const abrirNuevoArchivo = (pedido = null) => {
+    if (!esSupervisor) {
+      setError("Solo los supervisores pueden registrar archivos.");
+      return;
+    }
+    const seleccionado = pedido || pedidoSeleccionado || pedidos[0] || null;
+    setFormularioArchivo({
+      ...FORMULARIO_ARCHIVO_VACIO,
+      id_pedido: seleccionado ? String(seleccionado.id) : "",
+    });
+    setErrorArchivo("");
+    setModalArchivoAbierto(true);
+    setMenuCrearAbierto(false);
+  };
+
+  const cerrarModalArchivo = () => {
+    if (guardandoArchivo) return;
+    setModalArchivoAbierto(false);
+    setFormularioArchivo(FORMULARIO_ARCHIVO_VACIO);
+    setErrorArchivo("");
+  };
+
+  const guardarArchivo = async (event) => {
+    event.preventDefault();
+    if (!esSupervisor) return;
+    const nombre = formularioArchivo.nombre_archivo.trim();
+    const ruta = formularioArchivo.ruta_archivo.trim();
+
+    if (!nombre) {
+      setErrorArchivo("El nombre del archivo es obligatorio.");
+      return;
+    }
+    if (!ruta) {
+      setErrorArchivo("La ruta o URL del archivo es obligatoria.");
+      return;
+    }
+
+    setGuardandoArchivo(true);
+    setErrorArchivo("");
+    try {
+      await crearArchivoDisponible({
+        id_pedido: formularioArchivo.id_pedido
+          ? Number(formularioArchivo.id_pedido)
+          : null,
+        nombre_archivo: nombre,
+        ruta_archivo: ruta,
+      });
+      setModalArchivoAbierto(false);
+      setFormularioArchivo(FORMULARIO_ARCHIVO_VACIO);
+      setMensaje("Archivo registrado correctamente.");
+      await cargarInformacion(false);
+      window.requestAnimationFrame(() => irASeccion("seccion-archivos"));
+    } catch (err) {
+      setErrorArchivo(
+        obtenerMensajeError(err, "No se pudo registrar el archivo.")
+      );
+    } finally {
+      setGuardandoArchivo(false);
+    }
+  };
+
+  const eliminarArchivo = async (archivo) => {
+    if (!esSupervisor) return;
+    if (!archivo?.id) return;
+    if (!window.confirm(`¿Eliminar el registro del archivo “${archivo.nombre}”?`)) return;
+
+    setEliminandoArchivoId(archivo.id);
+    setError("");
+    try {
+      await eliminarArchivoDisponible(archivo.id);
+      setMensaje("Archivo eliminado correctamente.");
+      await cargarInformacion(false);
+    } catch (err) {
+      setError(obtenerMensajeError(err, "No se pudo eliminar el archivo."));
+    } finally {
+      setEliminandoArchivoId(null);
+    }
+  };
+
+  const abrirRutaArchivo = (archivo) => {
+    const ruta = archivo?.ruta?.trim();
+    if (!ruta) {
+      setError("Este registro no tiene una ruta o URL disponible.");
+      return;
+    }
+
+    try {
+      const base = api.defaults?.baseURL || window.location.origin;
+      const url = /^https?:\/\//i.test(ruta)
+        ? ruta
+        : new URL(ruta, base.endsWith("/") ? base : `${base}/`).toString();
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(ruta);
+        setMensaje("La ruta del archivo fue copiada al portapapeles.");
+      } else {
+        setError(`Ruta registrada: ${ruta}`);
+      }
+    }
+  };
+
   return (
     <div className={`enterprise-dashboard ${sidebarAbierto ? "sidebar-open" : ""}`}>
       <button
@@ -2025,7 +3542,11 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
       <aside className="enterprise-sidebar">
         <div className="enterprise-sidebar-brand">
-          <img src={logoMaquila} alt="Maquila System EC" />
+          <img
+            src={logoMaquila}
+            alt="Logo Maquila System EC"
+            className="enterprise-brand-logo-image"
+          />
           <div>
             <strong>Maquila System EC</strong>
             <span>Control y seguimiento de producción</span>
@@ -2050,83 +3571,21 @@ function SupervisorDashboard({ usuario, onLogout }) {
           <button
             type="button"
             className="enterprise-nav-item"
-            onClick={() => irASeccion("pedidos-recientes")}
-          >
-            <Icono nombre="orders" />
-            <span>Pedidos</span>
-            <span className="enterprise-nav-count">{pedidos.length}</span>
-          </button>
-
-          <button
-            type="button"
-            className="enterprise-nav-item"
             onClick={() => irASeccion("analitica-produccion")}
           >
             <Icono nombre="chart" />
             <span>Seguimiento</span>
           </button>
 
-          <span className="enterprise-sidebar-label">GESTIÓN</span>
-
           <button
             type="button"
             className="enterprise-nav-item"
-            onClick={() => {
-              setModalCrearPedidoAbierto(true);
-              setSidebarAbierto(false);
-            }}
+            onClick={() => irASeccion("pedidos-recientes")}
           >
-            <Icono nombre="plus" />
-            <span>Crear pedido</span>
+            <Icono nombre="orders" />
+            <span>Pedidos</span>
+            <span className="enterprise-nav-count">{pedidos.length}</span>
           </button>
-
-          <button
-            type="button"
-            className="enterprise-nav-item"
-            onClick={() => abrirEditarPedido()}
-          >
-            <Icono nombre="edit" />
-            <span>Editar pedido</span>
-          </button>
-
-          <button
-            type="button"
-            className="enterprise-nav-item"
-            onClick={() => abrirEliminarPedido()}
-          >
-            <Icono nombre="trash" />
-            <span>Eliminar pedido</span>
-          </button>
-
-          {Number(usuario?.id_rol) === 1 && (
-            <>
-              <button
-                type="button"
-                className="enterprise-nav-item"
-                onClick={() => {
-                  setModalMaquilaAbierto(true);
-                  setSidebarAbierto(false);
-                }}
-              >
-                <Icono nombre="factory" />
-                <span>Maquilas</span>
-              </button>
-
-              <button
-                type="button"
-                className="enterprise-nav-item"
-                onClick={() => {
-                  abrirCrearUsuario(1);
-                  setSidebarAbierto(false);
-                }}
-              >
-                <Icono nombre="users" />
-                <span>Usuarios</span>
-              </button>
-            </>
-          )}
-
-          <span className="enterprise-sidebar-label">OPERACIÓN</span>
 
           <button
             type="button"
@@ -2173,14 +3632,62 @@ function SupervisorDashboard({ usuario, onLogout }) {
             <span>Informes</span>
           </button>
 
-          <button
-            type="button"
-            className="enterprise-nav-item"
-            onClick={() => irASeccion("seccion-archivos")}
-          >
-            <Icono nombre="folder" />
-            <span>Archivos</span>
-          </button>
+          {esSupervisor && (
+            <>
+              <span className="enterprise-sidebar-label">ADMINISTRACIÓN</span>
+
+              <button
+                type="button"
+                className="enterprise-nav-item"
+                onClick={() => {
+                  setModalCrearPedidoAbierto(true);
+                  setSidebarAbierto(false);
+                }}
+              >
+                <Icono nombre="plus" />
+                <span>Crear pedido</span>
+              </button>
+
+              <button
+                type="button"
+                className="enterprise-nav-item"
+                onClick={() => abrirEditarPedido()}
+              >
+                <Icono nombre="edit" />
+                <span>Editar pedido</span>
+              </button>
+
+              <button
+                type="button"
+                className="enterprise-nav-item"
+                onClick={() => abrirEliminarPedido()}
+              >
+                <Icono nombre="trash" />
+                <span>Eliminar pedido</span>
+              </button>
+
+                  <button
+                    type="button"
+                    className="enterprise-nav-item"
+                    onClick={abrirListaMaquilas}
+                  >
+                    <Icono nombre="factory" />
+                    <span>Maquilas</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="enterprise-nav-item"
+                    onClick={() => {
+                      abrirCrearUsuario(1);
+                      setSidebarAbierto(false);
+                    }}
+                  >
+                    <Icono nombre="users" />
+                    <span>Usuarios</span>
+                  </button>
+            </>
+          )}
         </nav>
 
         <div className="enterprise-sidebar-support">
@@ -2214,6 +3721,12 @@ function SupervisorDashboard({ usuario, onLogout }) {
             >
               <Icono nombre="menu" size={22} />
             </button>
+
+            <img
+              src={logoMaquila}
+              alt="Logo Maquila System EC"
+              className="enterprise-topbar-logo"
+            />
 
             <div>
               <span>Sistema de gestión y seguimiento de producción</span>
@@ -2336,6 +3849,13 @@ function SupervisorDashboard({ usuario, onLogout }) {
                     >
                       <Icono nombre="factory" size={18} />
                       Nueva maquila
+                    </button>
+                    <button
+                      type="button"
+                      onClick={abrirNuevoInsumo}
+                    >
+                      <Icono nombre="layers" size={18} />
+                      Nuevo insumo
                     </button>
                     <button
                       type="button"
@@ -2477,7 +3997,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
               detalle="En producción"
               icono="orders"
               tono="blue"
-              onClick={() => irASeccion("pedidos-recientes")}
+              onClick={() => abrirModalEstado("activo")}
             />
             <TarjetaKPI
               titulo="Pedidos Retrasados"
@@ -2485,7 +4005,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
               detalle="Requieren atención"
               icono="clock"
               tono="orange"
-              onClick={() => irASeccion("pedidos-recientes")}
+              onClick={() => abrirModalEstado("retrasado")}
             />
             <TarjetaKPI
               titulo="Pedidos Finalizados"
@@ -2493,7 +4013,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
               detalle="Este período"
               icono="check"
               tono="green"
-              onClick={() => irASeccion("pedidos-recientes")}
+              onClick={() => abrirModalEstado("finalizado")}
             />
             <TarjetaKPI
               titulo="Maquilas Activas"
@@ -2501,6 +4021,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
               detalle="Registradas"
               icono="factory"
               tono="purple"
+              onClick={esSupervisor ? abrirListaMaquilas : undefined}
             />
             <TarjetaKPI
               titulo="Tareas Pendientes"
@@ -2520,7 +4041,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
             />
           </section>
 
-          <section className="enterprise-dashboard-summary" aria-label="Resumen de producción y disponibilidad">
+          <section className="enterprise-dashboard-summary" id="analitica-produccion" aria-label="Resumen de producción y disponibilidad">
             <article className="enterprise-card enterprise-status-card">
               <div className="enterprise-card-header">
                 <div>
@@ -2535,114 +4056,181 @@ function SupervisorDashboard({ usuario, onLogout }) {
               />
             </article>
 
-            <article className="enterprise-card">
-              <div className="enterprise-card-header">
+            <article
+              className="enterprise-card enterprise-planning-card"
+              id="calendario-notificaciones"
+            >
+              <div className="enterprise-card-header enterprise-planning-header">
                 <div>
-                  <span>PRODUCCIÓN</span>
-                  <h3>Producción por maquila</h3>
+                  <span>PLANIFICACIÓN</span>
+                  <h3>Calendario y notificaciones</h3>
                 </div>
+                <span className="enterprise-planning-badge">
+                  <Icono nombre="bell" size={14} />
+                  {alertasEntrega.length}
+                </span>
               </div>
-              <div className="enterprise-production-list">
-                {estadisticasMaquila.length === 0 ? (
-                  <div className="enterprise-empty-state">
-                    No existen datos disponibles.
-                  </div>
-                ) : (
-                  estadisticasMaquila.slice(0, 4).map((maquila) => (
-                    <div className="enterprise-production-item" key={maquila.nombre}>
-                      <div className="enterprise-production-title">
-                        <span>{maquila.nombre}</span>
-                        <strong>{maquila.progreso}%</strong>
-                      </div>
-                      <div className="enterprise-progress-track">
-                        <div
-                          className="enterprise-progress-value"
-                          style={{ width: `${maquila.progreso}%` }}
-                        />
-                      </div>
+
+              <div className="enterprise-planning-layout">
+                <div className="enterprise-planning-calendar">
+                  <div className="enterprise-calendar-simple">
+                    <div className="calendar-header">
+                      <strong>{calendarioActual.titulo}</strong>
                     </div>
-                  ))
-                )}
-              </div>
-            </article>
+                    <div className="calendar-days">
+                      {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'].map((dia) => (
+                        <span key={dia}>{dia}</span>
+                      ))}
+                    </div>
+                    <div className="calendar-grid">
+                      {calendarioActual.celdas.map((dia, indice) => {
+                        if (!dia) {
+                          return (
+                            <span
+                              key={`vacio-plan-${indice}`}
+                              className="calendar-empty"
+                            />
+                          );
+                        }
 
-            <article className="enterprise-card enterprise-inventory-card">
-              <div className="enterprise-card-header">
-                <div>
-                  <span>MAQUILA</span>
-                  <h3>Capacidad disponible</h3>
-                </div>
-              </div>
-              <div className="enterprise-inventory-summary">
-                <div className="enterprise-inventory-header">
-                  <div>
-                    <strong>{cargando ? "..." : maquilasDisponibles}</strong>
-                    <span>Maquilas disponibles</span>
-                  </div>
-                  <div>
-                    <strong>{cargando ? "..." : estadisticasMaquila.length}</strong>
-                    <span>Maquilas totales</span>
-                  </div>
-                </div>
-                <div className="enterprise-inventory-list">
-                  <div className="enterprise-inventory-item">
-                    <span>Pedidos en proceso</span>
-                    <strong>{cargando ? "..." : totalUnidades}</strong>
-                  </div>
-                  <div className="enterprise-inventory-item">
-                    <span>Progreso promedio</span>
-                    <strong>{cargando ? "..." : `${progresoPromedio}%`}</strong>
-                  </div>
-                </div>
-              </div>
-            </article>
+                        const entregasDia = calendarioActual.entregasPorDia[dia] || [];
+                        const clases = [
+                          dia === calendarioActual.hoy ? 'active-day' : '',
+                          entregasDia.length > 0 ? 'delivery-day' : '',
+                          dia === calendarioActual.manana &&
+                          entregasDia.some(
+                            (pedido) => obtenerTipoEstado(pedido) !== 'finalizado'
+                          )
+                            ? 'delivery-tomorrow'
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ');
 
-            <article className="enterprise-card enterprise-inventory-card">
-              <div className="enterprise-card-header">
-                <div>
-                  <span>INSUMOS</span>
-                  <h3>Stock y urgencias</h3>
+                        return (
+                          <span
+                            key={`dia-plan-${dia}`}
+                            className={clases}
+                            title={
+                              entregasDia.length
+                                ? entregasDia.map((pedido) => pedido.codigo).join(', ')
+                                : undefined
+                            }
+                          >
+                            {dia}
+                            {entregasDia.length > 0 && <i>{entregasDia.length}</i>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <div className="calendar-legend">
+                      <span>
+                        <i className="calendar-legend-today" /> Hoy
+                      </span>
+                      <span>
+                        <i className="calendar-legend-delivery" /> Entrega
+                      </span>
+                      <span>
+                        <i className="calendar-legend-tomorrow" /> Mañana
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="enterprise-inventory-summary">
-                <div className="enterprise-inventory-header">
-                  <div>
-                    <strong>{cargando ? "..." : inventarioResumido.totalInsumos}</strong>
-                    <span>Insumos registrados</span>
+
+                <div className="enterprise-planning-notifications">
+                  <div className="enterprise-delivery-alerts-header">
+                    <div>
+                      <Icono nombre="bell" size={16} />
+                      <strong>Notificaciones</strong>
+                    </div>
+                    <span>{alertasEntrega.length}</span>
                   </div>
-                  <div>
-                    <strong>{cargando ? "..." : inventarioResumido.totalStock.toLocaleString("es-EC")}</strong>
-                    <span>Stock total</span>
-                  </div>
-                </div>
-                <div className="enterprise-inventory-list">
-                  <div className="enterprise-inventory-item">
-                    <span>Insumos críticos</span>
-                    <strong>{cargando ? "..." : inventarioResumido.insumosCriticos}</strong>
-                  </div>
-                  <div className="enterprise-inventory-item">
-                    <span>Stock normal</span>
-                    <strong>{cargando ? "..." : inventarioResumido.totalStock - inventarioResumido.insumosCriticos}</strong>
+
+                  <div className="enterprise-delivery-alerts-list">
+                    {alertasEntrega.length === 0 ? (
+                      <div className="enterprise-delivery-alerts-empty">
+                        <Icono nombre="check" size={22} />
+                        <strong>Sin alertas</strong>
+                        <span>No hay alertas críticas en este momento.</span>
+                      </div>
+                    ) : (
+                      alertasEntrega.slice(0, 5).map((pedido) => (
+                        <button
+                          type="button"
+                          key={`alerta-plan-${pedido.id}-${pedido.codigo}`}
+                          className={`enterprise-delivery-alert enterprise-delivery-alert-${pedido.tipo}`}
+                          onClick={() => {
+                            setPedidoSeleccionadoId(pedido.id);
+                            setBusquedaGeneral(pedido.codigo);
+                            setFiltroEstado('todos');
+                            window.requestAnimationFrame(() =>
+                              irASeccion('pedidos-recientes')
+                            );
+                          }}
+                        >
+                          <span className="enterprise-delivery-alert-icon">
+                            <Icono
+                              nombre={pedido.tipo === 'vencida' ? 'alert' : 'clock'}
+                              size={16}
+                            />
+                          </span>
+                          <span>
+                            <strong>{pedido.codigo}</strong>
+                            <small>{pedido.mensajeAlerta}</small>
+                            <em>
+                              {pedido.tipoPrenda} · {pedido.fechaEntrega}
+                            </em>
+                          </span>
+                          <Icono nombre="chevron" size={14} />
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
             </article>
           </section>
 
-          <section className="enterprise-inventory-dashboard">
+          <section className="enterprise-inventory-dashboard" id="seccion-insumos">
             <article className="enterprise-card enterprise-inventory-overview-card">
               <div className="enterprise-section-header">
                 <div>
                   <span>Inventario de insumos</span>
                   <h3>Aquí tienes un resumen general del sistema.</h3>
                 </div>
-                <button
-                  type="button"
-                  className="enterprise-refresh-button"
-                  onClick={() => cargarInformacion(false)}
-                >
-                  Contar insumos
-                </button>
+                <div className="inventory-header-actions">
+                  {Number(usuario?.id_rol) === 1 && (
+                    <>
+                      <button
+                        type="button"
+                        className="inventory-secondary-action"
+                        onClick={abrirNuevoInsumo}
+                      >
+                        <Icono nombre="plus" size={15} />
+                        Nuevo insumo
+                      </button>
+                      <button
+                        type="button"
+                        className="enterprise-refresh-button"
+                        onClick={() => abrirConteoInsumo()}
+                        disabled={insumosDetalle.length === 0}
+                      >
+                        <Icono nombre="check" size={15} />
+                        Contar insumos
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    className="inventory-icon-refresh"
+                    onClick={() => cargarInformacion(false)}
+                    disabled={actualizando}
+                    title="Actualizar inventario"
+                    aria-label="Actualizar inventario"
+                  >
+                    <Icono nombre="refresh" size={15} />
+                  </button>
+                </div>
               </div>
 
               <div className="enterprise-inventory-alert-grid">
@@ -2671,7 +4259,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
                 <article className="enterprise-small-card inventory-trend-card">
                   <span>Resumen</span>
                   <strong>{cargando ? "..." : `${inventarioResumido.totalInsumos} insumos`}</strong>
-                  <small>{cargando ? "..." : `${Math.max(0, inventarioResumido.totalStock - inventarioResumido.insumosCriticos)} con stock adecuado`}</small>
+                  <small>{cargando ? "..." : `${inventarioResumido.insumosAdecuados} con stock adecuado`}</small>
                 </article>
               </div>
 
@@ -2687,10 +4275,13 @@ function SupervisorDashboard({ usuario, onLogout }) {
                       aria-label="Buscar insumo"
                     />
                   </div>
+                  <span className="inventory-table-counter">
+                    {insumosFiltrados.length} de {inventarioResumido.totalInsumos}
+                  </span>
                 </div>
 
                 <div className="enterprise-table-wrapper">
-                  <table className="enterprise-orders-table">
+                  <table className="enterprise-orders-table inventory-table">
                     <thead>
                       <tr>
                         <th>Código</th>
@@ -2700,25 +4291,56 @@ function SupervisorDashboard({ usuario, onLogout }) {
                         <th>Stock mínimo</th>
                         <th>Unidad</th>
                         <th>Estado</th>
+                        {Number(usuario?.id_rol) === 1 && <th>Acciones</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {insumosFiltrados.length === 0 ? (
                         <tr>
-                          <td colSpan="7" className="dashboard-empty">
-                            No hay insumos críticos o no se encontraron datos.
+                          <td
+                            colSpan={Number(usuario?.id_rol) === 1 ? 8 : 7}
+                            className="dashboard-empty"
+                          >
+                            {inventarioResumido.totalInsumos === 0
+                              ? "No hay insumos registrados. Use “Nuevo insumo” para comenzar."
+                              : "No se encontraron insumos con esa búsqueda."}
                           </td>
                         </tr>
                       ) : (
-                        insumosFiltrados.map((insumo, index) => (
-                          <tr key={`insumo-${index}`}>
+                        insumosFiltrados.map((insumo) => (
+                          <tr key={`insumo-${insumo.id}`}>
                             <td>{insumo.codigo}</td>
                             <td>{insumo.nombre}</td>
                             <td>{insumo.categoria}</td>
-                            <td>{insumo.stockActual}</td>
-                            <td>{insumo.stockMinimo}</td>
+                            <td>{insumo.stockActual.toLocaleString("es-EC")}</td>
+                            <td>{insumo.stockMinimo.toLocaleString("es-EC")}</td>
                             <td>{insumo.unidadMedida}</td>
-                            <td>{insumo.estado}</td>
+                            <td>
+                              <span className={`inventory-status inventory-status-${insumo.estadoTipo}`}>
+                                {insumo.estado}
+                              </span>
+                            </td>
+                            {Number(usuario?.id_rol) === 1 && (
+                              <td>
+                                <div className="inventory-row-actions">
+                                  <button
+                                    type="button"
+                                    onClick={() => abrirConteoInsumo(insumo)}
+                                    title="Actualizar conteo"
+                                  >
+                                    Contar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => abrirSalidaInsumo(insumo)}
+                                    title="Registrar salida"
+                                    disabled={insumo.stockActual <= 0}
+                                  >
+                                    Salida
+                                  </button>
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}
@@ -2728,138 +4350,6 @@ function SupervisorDashboard({ usuario, onLogout }) {
               </div>
             </article>
           </section>
-          <section className="enterprise-calendar-notifications-grid" id="calendario-notificaciones">
-            <article className="enterprise-card enterprise-calendar-card">
-              <div className="enterprise-card-header">
-                <div>
-                  <span>CALENDARIO</span>
-                  <h3>Entrega y fechas clave</h3>
-                </div>
-              </div>
-              <div className="enterprise-calendar-simple">
-                <div className="calendar-header">
-                  <strong>{calendarioActual.titulo}</strong>
-                </div>
-                <div className="calendar-days">
-                  {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'].map((dia) => (
-                    <span key={dia}>{dia}</span>
-                  ))}
-                </div>
-                <div className="calendar-grid">
-                  {calendarioActual.celdas.map((dia, indice) => {
-                    if (!dia) {
-                      return <span key={`vacio-${indice}`} className="calendar-empty" />;
-                    }
-                    const entregasDia = calendarioActual.entregasPorDia[dia] || [];
-                    const clases = [
-                      dia === calendarioActual.hoy ? 'active-day' : '',
-                      entregasDia.length > 0 ? 'delivery-day' : '',
-                      dia === calendarioActual.manana && entregasDia.some((pedido) => obtenerTipoEstado(pedido) !== 'finalizado')
-                        ? 'delivery-tomorrow'
-                        : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-                    return (
-                      <span
-                        key={`dia-${dia}`}
-                        className={clases}
-                        title={
-                          entregasDia.length
-                            ? entregasDia.map((pedido) => pedido.codigo).join(', ')
-                            : undefined
-                        }
-                      >
-                        {dia}
-                        {entregasDia.length > 0 && <i>{entregasDia.length}</i>}
-                      </span>
-                    );
-                  })}
-                </div>
-                <div className="calendar-legend">
-                  <span>
-                    <i className="calendar-legend-today" /> Hoy
-                  </span>
-                  <span>
-                    <i className="calendar-legend-delivery" /> Entrega
-                  </span>
-                  <span>
-                    <i className="calendar-legend-tomorrow" /> Mañana
-                  </span>
-                </div>
-              </div>
-            </article>
-
-            <article className="enterprise-card enterprise-notifications-card">
-              <div className="enterprise-card-header">
-                <div>
-                  <span>NOTIFICACIONES</span>
-                  <h3>Alertas de entrega</h3>
-                </div>
-              </div>
-              <div className="enterprise-delivery-alerts-list">
-                {alertasEntrega.length === 0 ? (
-                  <div className="enterprise-delivery-alerts-empty">
-                    <Icono nombre="check" size={22} />
-                    <strong>Sin alertas</strong>
-                    <span>No hay alertas críticas en este momento.</span>
-                  </div>
-                ) : (
-                  alertasEntrega.slice(0, 6).map((pedido) => (
-                    <button
-                      type="button"
-                      key={`alerta-${pedido.id}-${pedido.codigo}`}
-                      className={`enterprise-delivery-alert enterprise-delivery-alert-${pedido.tipo}`}
-                      onClick={() => {
-                        setPedidoSeleccionadoId(pedido.id);
-                        setBusquedaGeneral(pedido.codigo);
-                        setFiltroEstado('todos');
-                        window.requestAnimationFrame(() => irASeccion('pedidos-recientes'));
-                      }}
-                    >
-                      <span className="enterprise-delivery-alert-icon">
-                        <Icono nombre={pedido.tipo === 'vencida' ? 'alert' : 'clock'} size={17} />
-                      </span>
-                      <span>
-                        <strong>{pedido.codigo}</strong>
-                        <small>{pedido.mensajeAlerta}</small>
-                        <em>
-                          {pedido.tipoPrenda} · {pedido.fechaEntrega}
-                        </em>
-                      </span>
-                      <Icono nombre="chevron" size={15} />
-                    </button>
-                  ))
-                )}
-              </div>
-            </article>
-          </section>
-
-          <article className="enterprise-card enterprise-machines-card">
-            <div className="enterprise-card-header">
-              <div>
-                <span>MAQUILAS E INSUMOS</span>
-                <h3>Disponibilidad del turno</h3>
-              </div>
-            </div>
-            <div className="enterprise-inventory-availability">
-              <div>
-                <strong>{cargando ? '...' : maquilasDisponibles}</strong>
-                <span>Maquilas disponibles</span>
-              </div>
-              <div>
-                <strong>{cargando ? '...' : inventarioResumido.totalStock.toLocaleString('es-EC')}</strong>
-                <span>Stock total</span>
-              </div>
-              <div>
-                <strong>{cargando ? '...' : inventarioResumido.insumosCriticos}</strong>
-                <span>Insumos críticos</span>
-              </div>
-            </div>
-            <div className="enterprise-machines-note">
-              <small>Monitoreo rápido de maquilas e insumos disponibles para la próxima entrega.</small>
-            </div>
-          </article>
 
           <section className="enterprise-orders-section" id="pedidos-recientes">
             <div className="enterprise-section-header">
@@ -2932,142 +4422,327 @@ function SupervisorDashboard({ usuario, onLogout }) {
             </div>
           </section>
 
-          <section id="seccion-prendas" className="enterprise-prendas-section">
+          <section id="seccion-prendas" className={`enterprise-prendas-section ${esSupervisor ? "" : "is-read-only"}`}> 
             <Prendas
-              onDatosActualizados={(lista) => {
-                setPrendasBackend(lista);
-              }}
+              prendas={prendasBackend}
+              fases={fasesBackend}
+              tareas={tareasBackend}
+              cargando={cargando}
+              onRecargar={cargarInformacion}
             />
           </section>
 
-          <section className="enterprise-dashboard-final-grid">
-            <article className="enterprise-final-card ficha-card">
-              <div className="enterprise-card-header">
-                <div>
-                  <span>DETALLE</span>
-                  <h3>Ficha técnica de la prenda</h3>
-                </div>
+          <section
+            id="seccion-control-calidad"
+            className="quality-control-section enterprise-card"
+          >
+            <div className="quality-control-header">
+              <div>
+                <span className="enterprise-eyebrow">CONTROL DE CALIDAD</span>
+                <h3>Revisión de producción</h3>
+                <p>
+                  Registre por pedido las unidades aprobadas, defectuosas y las
+                  observaciones encontradas durante la inspección.
+                </p>
               </div>
-              <div className="enterprise-final-list compact">
-                <div>
-                  <strong>Código</strong>
-                  <span>{pedidoSeleccionado?.codigo || 'N/A'}</span>
-                </div>
-                <div>
-                  <strong>Prenda</strong>
-                  <span>{pedidoSeleccionado?.tipoPrenda || 'Sin datos'}</span>
-                </div>
-                <div>
-                  <strong>Color</strong>
-                  <span>{pedidoSeleccionado?.color || 'Sin datos'}</span>
-                </div>
-                <div>
-                  <strong>Talla</strong>
-                  <span>{pedidoSeleccionado?.talla || 'Sin datos'}</span>
-                </div>
-                <div>
-                  <strong>Cantidad</strong>
-                  <span>{pedidoSeleccionado?.cantidad || '0'}</span>
-                </div>
-                <div>
-                  <strong>Estado</strong>
-                  <span>{pedidoSeleccionado?.estado || 'Pendiente'}</span>
-                </div>
-                <div>
-                  <strong>Entrega</strong>
-                  <span>{pedidoSeleccionado?.fechaEntrega || 'Sin fecha'}</span>
-                </div>
-              </div>
-            </article>
 
-            <article className="enterprise-final-card fases-card">
-              <div className="enterprise-card-header">
-                <div>
-                  <span>FASES Y TAREAS</span>
-                  <h3>Flujo de producción</h3>
-                </div>
+              <div className="quality-control-header-actions">
+                <button
+                  type="button"
+                  className="dashboard-secondary-button"
+                  onClick={() => cargarInformacion(false)}
+                  disabled={actualizando}
+                >
+                  <Icono nombre="refresh" size={15} />
+                  {actualizando ? "Actualizando..." : "Actualizar"}
+                </button>
+                {Number(usuario?.id_rol) === 1 && (
+                  <button
+                    type="button"
+                    className="dashboard-primary-button"
+                    onClick={() => abrirNuevoControlCalidad()}
+                  >
+                    <Icono nombre="plus" size={16} />
+                    Nueva revisión
+                  </button>
+                )}
               </div>
-              <div className="enterprise-final-list compact">
-                <div>
-                  <strong>Fases registradas</strong>
-                  <span>{cargando ? '...' : totalFases}</span>
-                </div>
-                <div>
-                  <strong>Tareas en el sistema</strong>
-                  <span>{cargando ? '...' : totalTareas}</span>
-                </div>
-                <div>
-                  <strong>Control calidad</strong>
-                  <span>{cargando ? '...' : totalControlCalidad}</span>
-                </div>
-              </div>
-              <div className="enterprise-final-summary">
-                {(tareasBackend.slice(0, 4) || []).map((tarea, index) => (
-                  <div key={`tarea-${index}`}>
-                    <strong>{tarea.nombre || tarea.tarea || `Tarea ${index + 1}`}</strong>
-                    <span>{tarea.estado || tarea.status || 'Pendiente'}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
+            </div>
 
-            <div className="enterprise-final-column">
-              <article className="enterprise-final-card">
-                <div className="enterprise-card-header">
-                  <div>
-                    <span>INSUMOS</span>
-                    <h3>Gestión de insumos</h3>
-                  </div>
-                </div>
-                <div className="enterprise-final-list compact">
-                  {(insumosBackend.slice(0, 3) || []).map((insumo, index) => (
-                    <div key={`insumo-${index}`}>
-                      <strong>{insumo.codigo || insumo.nombre || `Insumo ${index + 1}`}</strong>
-                      <span>{`Stock ${insumo.stock_actual ?? insumo.stock ?? 'N/A'}`}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="quality-control-kpis">
+              <article>
+                <span>Revisiones registradas</span>
+                <strong>{cargando ? "..." : estadisticasControlCalidad.revisiones}</strong>
+                <small>Controles realizados</small>
               </article>
-
-              <article className="enterprise-final-card">
-                <div className="enterprise-card-header">
-                  <div>
-                    <span>CONTROL DE CALIDAD</span>
-                    <h3>Revisiones recientes</h3>
-                  </div>
-                </div>
-                <div className="enterprise-final-list compact">
-                  {(controlCalidadBackend.slice(0, 3) || []).map((item, index) => (
-                    <div key={`qc-${index}`}>
-                      <strong>{item.codigo_insumo || item.codigo_pedido || `QC ${index + 1}`}</strong>
-                      <span>{item.resultado || item.estado || 'Pendiente'}</span>
-                    </div>
-                  ))}
-                </div>
+              <article>
+                <span>Unidades revisadas</span>
+                <strong>{cargando ? "..." : estadisticasControlCalidad.revisadas}</strong>
+                <small>Total inspeccionado</small>
               </article>
-
-              <article className="enterprise-final-card">
-                <div className="enterprise-card-header">
-                  <div>
-                    <span>ARCHIVOS E INFORMES</span>
-                    <h3>Documentos recientes</h3>
-                  </div>
-                </div>
-                <div className="enterprise-final-list compact">
-                  {(archivosBackend.slice(0, 2) || []).map((archivo, index) => (
-                    <div key={`archivo-${index}`}>
-                      <strong>{archivo.nombre || archivo.archivo || `Archivo ${index + 1}`}</strong>
-                      <span>{archivo.tipo || archivo.extension || 'PDF'}</span>
-                    </div>
-                  ))}
-                  {(informesBackend.slice(0, 2) || []).map((informe, index) => (
-                    <div key={`informe-${index}`}>
-                      <strong>{informe.titulo || informe.nombre || `Informe ${index + 1}`}</strong>
-                      <span>{informe.fecha || informe.created_at || 'Sin fecha'}</span>
-                    </div>
-                  ))}
-                </div>
+              <article className="quality-kpi-ok">
+                <span>Unidades aprobadas</span>
+                <strong>{cargando ? "..." : estadisticasControlCalidad.buenas}</strong>
+                <small>{porcentajeCalidad}% de conformidad</small>
               </article>
+              <article className="quality-kpi-warning">
+                <span>Unidades defectuosas</span>
+                <strong>{cargando ? "..." : estadisticasControlCalidad.defectuosas}</strong>
+                <small>Requieren seguimiento</small>
+              </article>
+            </div>
+
+            <div className="quality-control-toolbar">
+              <div className="enterprise-global-search quality-control-search">
+                <Icono nombre="search" size={16} />
+                <input
+                  type="search"
+                  value={busquedaControlCalidad}
+                  onChange={(event) => setBusquedaControlCalidad(event.target.value)}
+                  placeholder="Buscar pedido, prenda o resultado"
+                  aria-label="Buscar controles de calidad"
+                />
+                {busquedaControlCalidad && (
+                  <button
+                    type="button"
+                    className="enterprise-search-clear"
+                    onClick={() => setBusquedaControlCalidad("")}
+                    aria-label="Limpiar búsqueda de calidad"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              <span>{controlesCalidadFiltrados.length} revisión(es)</span>
+            </div>
+
+            <div className="quality-control-table-wrapper">
+              <table className="quality-control-table">
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Prenda</th>
+                    <th>Fecha</th>
+                    <th>Buenas</th>
+                    <th>Defectuosas</th>
+                    <th>Revisadas</th>
+                    <th>Resultado</th>
+                    <th>Observaciones</th>
+                    {Number(usuario?.id_rol) === 1 && <th>Acciones</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {controlesCalidadFiltrados.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={Number(usuario?.id_rol) === 1 ? 9 : 8}
+                        className="dashboard-empty"
+                      >
+                        No existen controles de calidad registrados.
+                      </td>
+                    </tr>
+                  ) : (
+                    controlesCalidadFiltrados.map((control) => (
+                      <tr key={`control-calidad-${control.id}`}>
+                        <td>
+                          <strong>{control.codigoPedido}</strong>
+                        </td>
+                        <td>{control.prenda}</td>
+                        <td>{control.fechaRevision}</td>
+                        <td className="quality-number-ok">{control.cantidadBuena}</td>
+                        <td className="quality-number-defect">
+                          {control.cantidadDefectuosa}
+                        </td>
+                        <td>{control.totalRevisado}</td>
+                        <td>
+                          <span
+                            className={`quality-status-badge ${
+                              control.cantidadDefectuosa > 0
+                                ? "quality-status-warning"
+                                : "quality-status-ok"
+                            }`}
+                          >
+                            {control.resultado}
+                          </span>
+                        </td>
+                        <td className="quality-observations">
+                          {control.observaciones}
+                        </td>
+                        {Number(usuario?.id_rol) === 1 && (
+                          <td>
+                            <div className="quality-row-actions">
+                              <button
+                                type="button"
+                                onClick={() => abrirEditarControlCalidad(control)}
+                                title="Editar revisión"
+                                aria-label={`Editar control de ${control.codigoPedido}`}
+                              >
+                                <Icono nombre="edit" size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                className="quality-delete-button"
+                                onClick={() => eliminarControlCalidad(control)}
+                                disabled={eliminandoControlCalidadId === control.id}
+                                title="Eliminar revisión"
+                                aria-label={`Eliminar control de ${control.codigoPedido}`}
+                              >
+                                <Icono nombre="trash" size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="seccion-informes" className="documents-section enterprise-card">
+            <div className="documents-header">
+              <div>
+                <span className="enterprise-eyebrow">INFORMES</span>
+                <h3>Informes de producción</h3>
+                <p>
+                  Genere el informe de un pedido usando los datos existentes de
+                  seguimiento, maquila, fases, tiempos y porcentaje de avance.
+                </p>
+              </div>
+              <div className="documents-header-actions">
+                <button
+                  type="button"
+                  className="dashboard-secondary-button"
+                  onClick={() => cargarInformacion(false)}
+                  disabled={actualizando}
+                >
+                  <Icono nombre="refresh" size={15} />
+                  {actualizando ? "Actualizando..." : "Actualizar"}
+                </button>
+                {Number(usuario?.id_rol) === 1 && (
+                  <button
+                    type="button"
+                    className="dashboard-primary-button"
+                    onClick={() => abrirGenerarInforme()}
+                  >
+                    <Icono nombre="plus" size={16} />
+                    Generar informe
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="documents-kpis">
+              <article>
+                <span>Informes registrados</span>
+                <strong>{cargando ? "..." : estadisticasInformes.total}</strong>
+                <small>Historial disponible</small>
+              </article>
+              <article>
+                <span>Cumplimiento promedio</span>
+                <strong>{cargando ? "..." : `${estadisticasInformes.promedioCumplimiento}%`}</strong>
+                <small>Según seguimientos registrados</small>
+              </article>
+              <article>
+                <span>Con ruta PDF</span>
+                <strong>{cargando ? "..." : estadisticasInformes.conRuta}</strong>
+                <small>Informes con documento asociado</small>
+              </article>
+            </div>
+
+            <div className="documents-toolbar">
+              <div className="enterprise-global-search documents-search">
+                <Icono nombre="search" size={16} />
+                <input
+                  type="search"
+                  value={busquedaInformes}
+                  onChange={(event) => setBusquedaInformes(event.target.value)}
+                  placeholder="Buscar pedido, prenda o maquila"
+                  aria-label="Buscar informes"
+                />
+                {busquedaInformes && (
+                  <button
+                    type="button"
+                    className="enterprise-search-clear"
+                    onClick={() => setBusquedaInformes("")}
+                    aria-label="Limpiar búsqueda de informes"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              <span>{informesFiltrados.length} informe(s)</span>
+            </div>
+
+            <div className="enterprise-table-wrapper documents-table-wrapper">
+              <table className="enterprise-orders-table documents-table">
+                <thead>
+                  <tr>
+                    <th>Informe</th>
+                    <th>Pedido</th>
+                    <th>Prenda</th>
+                    <th>Fecha</th>
+                    <th>Planificado</th>
+                    <th>Real</th>
+                    <th>Cumplimiento</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {informesFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="dashboard-empty">
+                        No existen informes registrados.
+                      </td>
+                    </tr>
+                  ) : (
+                    informesFiltrados.map((informe) => (
+                      <tr key={`informe-funcional-${informe.id}`}>
+                        <td><strong>INF-{String(informe.id).padStart(4, "0")}</strong></td>
+                        <td>{informe.codigoPedido}</td>
+                        <td>{informe.prenda}</td>
+                        <td>{informe.fechaGeneracion}</td>
+                        <td>{informe.tiempoPlanificado} días</td>
+                        <td>{informe.tiempoReal} días</td>
+                        <td>
+                          <div className="document-progress">
+                            <div className="progress-track">
+                              <div
+                                className="progress-value"
+                                style={{ width: `${Math.min(100, Math.max(0, informe.porcentajeCumplimiento))}%` }}
+                              />
+                            </div>
+                            <span>{informe.porcentajeCumplimiento}%</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="document-row-actions">
+                            <button
+                              type="button"
+                              onClick={() => abrirDetalleInforme(informe)}
+                              title="Ver informe"
+                            >
+                              Ver
+                            </button>
+                            {Number(usuario?.id_rol) === 1 && (
+                              <button
+                                type="button"
+                                className="document-delete-button"
+                                onClick={() => eliminarInforme(informe)}
+                                disabled={eliminandoInformeId === informe.id}
+                                title="Eliminar informe"
+                              >
+                                <Icono nombre="trash" size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </section>
         </main>
@@ -3096,6 +4771,96 @@ function SupervisorDashboard({ usuario, onLogout }) {
           setRolNuevoUsuario(null);
         }}
       />
+
+      <ModalBase
+        abierto={modalListaMaquilasAbierto}
+        titulo="Maquilas registradas"
+        onCerrar={() => setModalListaMaquilasAbierto(false)}
+        ancho="grande"
+      >
+        <div className="maquilas-modal-toolbar">
+          <div>
+            <strong>{maquilasBackend.length} maquila{maquilasBackend.length === 1 ? "" : "s"}</strong>
+            <span>Registradas actualmente en el sistema</span>
+          </div>
+          {Number(usuario?.id_rol) === 1 && (
+            <button
+              type="button"
+              className="dashboard-primary-button"
+              onClick={() => {
+                setModalListaMaquilasAbierto(false);
+                setModalMaquilaAbierto(true);
+              }}
+            >
+              <Icono nombre="plus" size={15} />
+              Nueva maquila
+            </button>
+          )}
+        </div>
+
+        <div className="dashboard-table-wrapper maquilas-table-wrapper">
+          <table className="dashboard-table maquilas-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Maquila / Taller</th>
+                <th>Responsable</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {maquilasBackend.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="dashboard-empty">
+                    No hay maquilas registradas.
+                  </td>
+                </tr>
+              ) : (
+                maquilasBackend.map((maquila, index) => {
+                  const id = maquila.id_maquila ?? maquila.id ?? index + 1;
+                  const nombre =
+                    maquila.nombre_maquila ??
+                    maquila.nombre ??
+                    maquila.nombre_taller ??
+                    maquila.taller ??
+                    `Maquila ${id}`;
+                  const responsable =
+                    maquila.responsable ??
+                    maquila.nombre_responsable ??
+                    maquila.encargado ??
+                    maquila.contacto_nombre ??
+                    "Sin registrar";
+                  const contacto =
+                    maquila.telefono ??
+                    maquila.celular ??
+                    maquila.correo ??
+                    maquila.email ??
+                    "Sin registrar";
+                  const estadoMaquila =
+                    maquila.estado ??
+                    maquila.status ??
+                    (maquila.activa === false ? "Inactiva" : "Activa");
+
+                  return (
+                    <tr key={`maquila-lista-${id}-${index}`}>
+                      <td>{id}</td>
+                      <td><strong>{nombre}</strong></td>
+                      <td>{responsable}</td>
+                      <td>{contacto}</td>
+                      <td>
+                        <span className={`maquila-status ${String(estadoMaquila).toLowerCase().includes("inact") ? "is-inactive" : "is-active"}`}>
+                          {String(estadoMaquila)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </ModalBase>
 
       <ModalBase
         abierto={modalEditarAbierto}
@@ -3262,11 +5027,746 @@ function SupervisorDashboard({ usuario, onLogout }) {
       </ModalBase>
 
       <ModalBase
+        abierto={modalInsumoAbierto}
+        titulo="Registrar nuevo insumo"
+        onCerrar={() => !guardandoInsumo && setModalInsumoAbierto(false)}
+        ancho="normal"
+      >
+        {errorInsumo && <div className="dashboard-modal-error">{errorInsumo}</div>}
+        <form onSubmit={guardarNuevoInsumo}>
+          <div className="dashboard-form-grid">
+            <label className="dashboard-field dashboard-field-full">
+              <span>Nombre del insumo *</span>
+              <input
+                value={formularioInsumo.nombre_insumo}
+                onChange={(event) =>
+                  setFormularioInsumo((actual) => ({ ...actual, nombre_insumo: event.target.value }))
+                }
+                placeholder="Ej. Hilo poliéster negro"
+                autoFocus
+                required
+              />
+            </label>
+            <label className="dashboard-field">
+              <span>Unidad de medida *</span>
+              <input
+                value={formularioInsumo.unidad_medida}
+                onChange={(event) =>
+                  setFormularioInsumo((actual) => ({ ...actual, unidad_medida: event.target.value }))
+                }
+                placeholder="und, m, kg, rollo..."
+                required
+              />
+            </label>
+            <label className="dashboard-field">
+              <span>Stock mínimo *</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formularioInsumo.stock_minimo}
+                onChange={(event) =>
+                  setFormularioInsumo((actual) => ({ ...actual, stock_minimo: event.target.value }))
+                }
+                placeholder="0"
+                required
+              />
+            </label>
+            <label className="dashboard-field dashboard-field-full">
+              <span>Stock inicial *</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formularioInsumo.stock_actual}
+                onChange={(event) =>
+                  setFormularioInsumo((actual) => ({ ...actual, stock_actual: event.target.value }))
+                }
+                placeholder="0"
+                required
+              />
+            </label>
+          </div>
+          <div className="dashboard-modal-actions">
+            <button type="button" className="dashboard-secondary-button" onClick={() => setModalInsumoAbierto(false)} disabled={guardandoInsumo}>
+              Cancelar
+            </button>
+            <button type="submit" className="dashboard-primary-button" disabled={guardandoInsumo}>
+              {guardandoInsumo ? "Guardando..." : "Guardar insumo"}
+            </button>
+          </div>
+        </form>
+      </ModalBase>
+
+      <ModalBase
+        abierto={modalConteoInsumoAbierto}
+        titulo="Contar inventario"
+        onCerrar={() => !guardandoInsumo && setModalConteoInsumoAbierto(false)}
+        ancho="normal"
+      >
+        {errorInsumo && <div className="dashboard-modal-error">{errorInsumo}</div>}
+        <form onSubmit={guardarConteoInsumo}>
+          <div className="dashboard-form-grid">
+            <label className="dashboard-field dashboard-field-full">
+              <span>Insumo *</span>
+              <select
+                value={formularioConteoInsumo.id_insumo}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  const insumo = insumosDetalle.find((item) => String(item.id) === id);
+                  setFormularioConteoInsumo({
+                    id_insumo: id,
+                    stock_actual: insumo ? String(insumo.stockActual) : "",
+                    stock_minimo: insumo ? String(insumo.stockMinimo) : "",
+                  });
+                }}
+                required
+              >
+                <option value="">Seleccione...</option>
+                {insumosDetalle.map((insumo) => (
+                  <option key={`conteo-${insumo.id}`} value={insumo.id}>
+                    {insumo.codigo} · {insumo.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="dashboard-field">
+              <span>Stock contado *</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formularioConteoInsumo.stock_actual}
+                onChange={(event) =>
+                  setFormularioConteoInsumo((actual) => ({ ...actual, stock_actual: event.target.value }))
+                }
+                required
+              />
+            </label>
+            <label className="dashboard-field">
+              <span>Stock mínimo *</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formularioConteoInsumo.stock_minimo}
+                onChange={(event) =>
+                  setFormularioConteoInsumo((actual) => ({ ...actual, stock_minimo: event.target.value }))
+                }
+                required
+              />
+            </label>
+          </div>
+          <div className="dashboard-modal-actions">
+            <button type="button" className="dashboard-secondary-button" onClick={() => setModalConteoInsumoAbierto(false)} disabled={guardandoInsumo}>
+              Cancelar
+            </button>
+            <button type="submit" className="dashboard-primary-button" disabled={guardandoInsumo}>
+              {guardandoInsumo ? "Actualizando..." : "Guardar conteo"}
+            </button>
+          </div>
+        </form>
+      </ModalBase>
+
+      <ModalBase
+        abierto={modalSalidaInsumoAbierto}
+        titulo="Registrar salida de insumo"
+        onCerrar={() => !guardandoInsumo && setModalSalidaInsumoAbierto(false)}
+        ancho="normal"
+      >
+        {errorInsumo && <div className="dashboard-modal-error">{errorInsumo}</div>}
+        <form onSubmit={guardarSalidaInsumo}>
+          <div className="dashboard-form-grid">
+            <label className="dashboard-field dashboard-field-full">
+              <span>Insumo *</span>
+              <select
+                value={formularioSalidaInsumo.id_insumo}
+                onChange={(event) =>
+                  setFormularioSalidaInsumo((actual) => ({ ...actual, id_insumo: event.target.value }))
+                }
+                required
+              >
+                <option value="">Seleccione...</option>
+                {insumosDetalle.map((insumo) => (
+                  <option key={`salida-${insumo.id}`} value={insumo.id} disabled={insumo.stockActual <= 0}>
+                    {insumo.codigo} · {insumo.nombre} · stock {insumo.stockActual}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="dashboard-field">
+              <span>Pedido relacionado</span>
+              <select
+                value={formularioSalidaInsumo.id_pedido}
+                onChange={(event) =>
+                  setFormularioSalidaInsumo((actual) => ({ ...actual, id_pedido: event.target.value }))
+                }
+              >
+                <option value="">Sin pedido</option>
+                {pedidos.map((pedido) => (
+                  <option key={`pedido-insumo-${pedido.id}`} value={pedido.id}>
+                    {pedido.codigo} · {pedido.tipoPrenda}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="dashboard-field">
+              <span>Fecha de salida *</span>
+              <input
+                type="date"
+                value={formularioSalidaInsumo.fecha_envio}
+                onChange={(event) =>
+                  setFormularioSalidaInsumo((actual) => ({ ...actual, fecha_envio: event.target.value }))
+                }
+                required
+              />
+            </label>
+            <label className="dashboard-field dashboard-field-full">
+              <span>Cantidad *</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={formularioSalidaInsumo.cantidad}
+                onChange={(event) =>
+                  setFormularioSalidaInsumo((actual) => ({ ...actual, cantidad: event.target.value }))
+                }
+                required
+              />
+            </label>
+          </div>
+          <p className="inventory-modal-note">
+            Al guardar, la cantidad se descontará automáticamente del stock actual.
+          </p>
+          <div className="dashboard-modal-actions">
+            <button type="button" className="dashboard-secondary-button" onClick={() => setModalSalidaInsumoAbierto(false)} disabled={guardandoInsumo}>
+              Cancelar
+            </button>
+            <button type="submit" className="dashboard-primary-button" disabled={guardandoInsumo}>
+              {guardandoInsumo ? "Registrando..." : "Registrar salida"}
+            </button>
+          </div>
+        </form>
+      </ModalBase>
+
+      <ModalBase
+        abierto={modalControlCalidadAbierto}
+        titulo={
+          controlCalidadEditar
+            ? "Editar control de calidad"
+            : "Nueva revisión de calidad"
+        }
+        onCerrar={cerrarModalControlCalidad}
+        ancho="normal"
+      >
+        {errorControlCalidad && (
+          <div className="dashboard-modal-error">{errorControlCalidad}</div>
+        )}
+
+        <form onSubmit={guardarControlCalidad}>
+          <div className="dashboard-form-grid">
+            <label className="dashboard-field dashboard-field-full">
+              <span>Pedido a revisar *</span>
+              <select
+                value={formularioControlCalidad.id_pedido}
+                onChange={(event) =>
+                  setFormularioControlCalidad((actual) => ({
+                    ...actual,
+                    id_pedido: event.target.value,
+                    cantidad_buena: "",
+                    cantidad_defectuosa: "",
+                  }))
+                }
+                required
+              >
+                <option value="">Seleccione un pedido...</option>
+                {pedidos.map((pedido) => (
+                  <option key={`qc-pedido-${pedido.id}`} value={pedido.id}>
+                    {pedido.codigo} · {pedido.tipoPrenda} · {pedido.cantidad} unidades
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="dashboard-field">
+              <span>Fecha de revisión *</span>
+              <input
+                type="date"
+                value={formularioControlCalidad.fecha_revision}
+                onChange={(event) =>
+                  setFormularioControlCalidad((actual) => ({
+                    ...actual,
+                    fecha_revision: event.target.value,
+                  }))
+                }
+                required
+              />
+            </label>
+
+            <div className="quality-modal-balance">
+              <span>Unidades pendientes de revisar</span>
+              <strong>
+                {saldoPendienteControlCalidad === null
+                  ? "Seleccione un pedido"
+                  : saldoPendienteControlCalidad}
+              </strong>
+            </div>
+
+            <label className="dashboard-field">
+              <span>Cantidad buena *</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={formularioControlCalidad.cantidad_buena}
+                onChange={(event) =>
+                  setFormularioControlCalidad((actual) => ({
+                    ...actual,
+                    cantidad_buena: event.target.value,
+                  }))
+                }
+                placeholder="0"
+                required
+              />
+            </label>
+
+            <label className="dashboard-field">
+              <span>Cantidad defectuosa *</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={formularioControlCalidad.cantidad_defectuosa}
+                onChange={(event) =>
+                  setFormularioControlCalidad((actual) => ({
+                    ...actual,
+                    cantidad_defectuosa: event.target.value,
+                  }))
+                }
+                placeholder="0"
+                required
+              />
+            </label>
+
+            <label className="dashboard-field dashboard-field-full">
+              <span>Observaciones *</span>
+              <textarea
+                rows="4"
+                value={formularioControlCalidad.observaciones}
+                onChange={(event) =>
+                  setFormularioControlCalidad((actual) => ({
+                    ...actual,
+                    observaciones: event.target.value,
+                  }))
+                }
+                placeholder="Ejemplo: costura irregular en 3 prendas, manchas, diferencia de talla..."
+                required
+              />
+            </label>
+          </div>
+
+          {pedidoControlSeleccionado && (
+            <div className="quality-modal-summary">
+              <div>
+                <span>Pedido</span>
+                <strong>{pedidoControlSeleccionado.codigo}</strong>
+              </div>
+              <div>
+                <span>Cantidad del pedido</span>
+                <strong>{pedidoControlSeleccionado.cantidad}</strong>
+              </div>
+              <div>
+                <span>Ya revisadas</span>
+                <strong>{unidadesRevisadasPedidoSeleccionado}</strong>
+              </div>
+              <div>
+                <span>Esta revisión</span>
+                <strong>
+                  {Number(formularioControlCalidad.cantidad_buena || 0) +
+                    Number(formularioControlCalidad.cantidad_defectuosa || 0)}
+                </strong>
+              </div>
+            </div>
+          )}
+
+          <div className="dashboard-modal-actions">
+            <button
+              type="button"
+              className="dashboard-secondary-button"
+              onClick={cerrarModalControlCalidad}
+              disabled={guardandoControlCalidad}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="dashboard-primary-button"
+              disabled={guardandoControlCalidad}
+            >
+              {guardandoControlCalidad
+                ? "Guardando..."
+                : controlCalidadEditar
+                ? "Guardar cambios"
+                : "Registrar revisión"}
+            </button>
+          </div>
+        </form>
+      </ModalBase>
+
+      <ModalBase
+        abierto={modalInformeAbierto}
+        titulo={informeDetalle ? "Detalle del informe" : "Generar informe de producción"}
+        onCerrar={cerrarModalInforme}
+        ancho="grande"
+      >
+        {errorInforme && (
+          <div className="dashboard-modal-error">{errorInforme}</div>
+        )}
+
+        <form onSubmit={generarInforme} className="report-modal-layout">
+          <div className="dashboard-form-grid">
+            <label className="dashboard-field dashboard-field-full">
+              <span>Pedido *</span>
+              <select
+                value={formularioInforme.codigo_pedido}
+                onChange={(event) => {
+                  const nuevoCodigo = event.target.value;
+                  setFormularioInforme((actual) => ({
+                    ...actual,
+                    codigo_pedido: nuevoCodigo,
+                    nombre_archivo:
+                      !actual.nombre_archivo || actual.nombre_archivo.startsWith("Informe_")
+                        ? nombrePdfSugerido(nuevoCodigo)
+                        : actual.nombre_archivo,
+                  }));
+                  setInformeDetalle(null);
+                }}
+                disabled={generandoInforme}
+                required
+              >
+                <option value="">Seleccione un pedido...</option>
+                {pedidos.map((pedido) => (
+                  <option key={`informe-pedido-${pedido.id}`} value={pedido.codigo}>
+                    {pedido.codigo} · {pedido.tipoPrenda} · {pedido.maquila}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="dashboard-field">
+              <span>Qué desea hacer *</span>
+              <select
+                value={formularioInforme.accion_salida}
+                onChange={(event) =>
+                  setFormularioInforme((actual) => ({
+                    ...actual,
+                    accion_salida: event.target.value,
+                  }))
+                }
+                disabled={generandoInforme}
+              >
+                <option value="guardar_pdf">Guardar PDF en una carpeta de mi computadora</option>
+                <option value="vista_previa">Generar y revisar antes de guardar</option>
+                <option value="solo_registrar">Solo registrar el informe en el sistema</option>
+              </select>
+            </label>
+
+            <label className="dashboard-field">
+              <span>Nombre del PDF</span>
+              <input
+                type="text"
+                value={formularioInforme.nombre_archivo}
+                onChange={(event) =>
+                  setFormularioInforme((actual) => ({
+                    ...actual,
+                    nombre_archivo: event.target.value,
+                  }))
+                }
+                onBlur={() =>
+                  setFormularioInforme((actual) => ({
+                    ...actual,
+                    nombre_archivo: limpiarNombreArchivo(
+                      actual.nombre_archivo ||
+                        nombrePdfSugerido(actual.codigo_pedido)
+                    ),
+                  }))
+                }
+                placeholder={nombrePdfSugerido(formularioInforme.codigo_pedido)}
+                disabled={generandoInforme}
+              />
+            </label>
+
+            {formularioInforme.accion_salida === "guardar_pdf" && (
+              <div className="report-save-destination dashboard-field-full">
+                <Icono nombre="folder" size={18} />
+                <div>
+                  <strong>La carpeta se elige desde Windows</strong>
+                  <span>
+                    Al presionar “Generar informe”, Chrome/Edge abrirá el selector
+                    para que elija Escritorio, Documentos, Descargas o cualquier
+                    carpeta disponible en su computadora.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="documents-modal-note">
+            El sistema calcula automáticamente el tiempo planificado, tiempo real,
+            porcentaje de cumplimiento, fase actual y observaciones. La ruta completa
+            de una carpeta local no se escribe manualmente: por seguridad del navegador,
+            usted la selecciona directamente en la ventana de Windows al guardar el PDF.
+          </p>
+
+          <div className="dashboard-modal-actions">
+            <button
+              type="button"
+              className="dashboard-secondary-button"
+              onClick={cerrarModalInforme}
+              disabled={generandoInforme}
+            >
+              Cerrar
+            </button>
+            <button
+              type="submit"
+              className="dashboard-primary-button"
+              disabled={generandoInforme || !formularioInforme.codigo_pedido}
+            >
+              {generandoInforme
+                ? "Procesando..."
+                : informeDetalle
+                ? "Generar nuevo informe"
+                : "Generar informe"}
+            </button>
+          </div>
+        </form>
+
+        {informeDetalle && (
+          <div className="report-detail-panel">
+            <div className="report-detail-heading">
+              <div>
+                <span>INFORME GENERADO</span>
+                <h3>
+                  {informeDetalle.pedido?.codigo_pedido ||
+                    formularioInforme.codigo_pedido}
+                </h3>
+              </div>
+              <div className="report-detail-actions">
+                <button
+                  type="button"
+                  className="dashboard-secondary-button"
+                  onClick={() => imprimirInforme(informeDetalle)}
+                >
+                  <Icono nombre="folder" size={15} />
+                  Vista previa / Imprimir
+                </button>
+                <button
+                  type="button"
+                  className="dashboard-primary-button"
+                  onClick={() => guardarPdfEnEquipo(informeDetalle)}
+                >
+                  <Icono nombre="folder" size={15} />
+                  Guardar PDF en...
+                </button>
+              </div>
+            </div>
+
+            <div className="report-detail-grid">
+              <div>
+                <span>Prenda</span>
+                <strong>
+                  {informeDetalle.pedido?.tipo_prenda ||
+                    informeDetalle.pedido?.nombre_prenda ||
+                    "Sin especificar"}
+                </strong>
+              </div>
+              <div>
+                <span>Maquila</span>
+                <strong>
+                  {informeDetalle.maquila?.nombre_maquila ||
+                    informeDetalle.maquila?.nombre ||
+                    informeDetalle.pedido?.id_maquila ||
+                    "Sin asignar"}
+                </strong>
+              </div>
+              <div>
+                <span>Fase actual</span>
+                <strong>
+                  {informeDetalle.fase_actual?.nombre_fase ||
+                    informeDetalle.fase_actual?.nombre ||
+                    "Sin fase"}
+                </strong>
+              </div>
+              <div>
+                <span>Tiempo planificado</span>
+                <strong>{Number(informeDetalle.tiempo_planificado || 0)} días</strong>
+              </div>
+              <div>
+                <span>Tiempo real</span>
+                <strong>{Number(informeDetalle.tiempo_real || 0)} días</strong>
+              </div>
+              <div>
+                <span>Cumplimiento</span>
+                <strong>{Number(informeDetalle.porcentaje_cumplimiento || 0)}%</strong>
+              </div>
+              <div>
+                <span>Fecha de generación</span>
+                <strong>{formatearFecha(informeDetalle.fecha_generacion)}</strong>
+              </div>
+              <div>
+                <span>Archivo PDF</span>
+                <strong>{informeDetalle.ruta_pdf || formularioInforme.nombre_archivo || "Aún no guardado"}</strong>
+              </div>
+            </div>
+
+            <div className="report-observations">
+              <span>Observaciones generales</span>
+              <p>{informeDetalle.observaciones_generales || "Sin observaciones registradas."}</p>
+            </div>
+
+            <div className="report-followups">
+              <div className="report-followups-title">
+                <strong>Seguimientos incluidos</strong>
+                <span>{informeDetalle.seguimientos?.length || 0} registro(s)</span>
+              </div>
+              {Array.isArray(informeDetalle.seguimientos) && informeDetalle.seguimientos.length > 0 ? (
+                <div className="dashboard-table-wrapper">
+                  <table className="dashboard-table report-followups-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Avance</th>
+                        <th>Observación</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {informeDetalle.seguimientos.map((seg, index) => (
+                        <tr key={`seguimiento-informe-${seg.id_seguimiento || index}`}>
+                          <td>{index + 1}</td>
+                          <td>{formatearFecha(seg.fecha_inicio)}</td>
+                          <td>{formatearFecha(seg.fecha_fin)}</td>
+                          <td>{Number(seg.porcentaje_avance || 0)}%</td>
+                          <td>{seg.observacion || "Sin observación"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="dashboard-empty-message">Sin seguimientos registrados.</p>
+              )}
+            </div>
+          </div>
+        )}
+      </ModalBase>
+
+      <ModalBase
+        abierto={modalArchivoAbierto}
+        titulo="Registrar archivo de pedido"
+        onCerrar={cerrarModalArchivo}
+        ancho="normal"
+      >
+        {errorArchivo && (
+          <div className="dashboard-modal-error">{errorArchivo}</div>
+        )}
+
+        <form onSubmit={guardarArchivo}>
+          <div className="dashboard-form-grid">
+            <label className="dashboard-field dashboard-field-full">
+              <span>Pedido asociado</span>
+              <select
+                value={formularioArchivo.id_pedido}
+                onChange={(event) =>
+                  setFormularioArchivo((actual) => ({
+                    ...actual,
+                    id_pedido: event.target.value,
+                  }))
+                }
+                disabled={guardandoArchivo}
+              >
+                <option value="">Archivo general, sin pedido</option>
+                {pedidos.map((pedido) => (
+                  <option key={`archivo-pedido-${pedido.id}`} value={pedido.id}>
+                    {pedido.codigo} · {pedido.tipoPrenda}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="dashboard-field dashboard-field-full">
+              <span>Nombre del archivo *</span>
+              <input
+                type="text"
+                value={formularioArchivo.nombre_archivo}
+                onChange={(event) =>
+                  setFormularioArchivo((actual) => ({
+                    ...actual,
+                    nombre_archivo: event.target.value,
+                  }))
+                }
+                placeholder="Ejemplo: Ficha técnica PED-001.pdf"
+                disabled={guardandoArchivo}
+                required
+              />
+            </label>
+
+            <label className="dashboard-field dashboard-field-full">
+              <span>Ruta o URL del archivo *</span>
+              <input
+                type="text"
+                value={formularioArchivo.ruta_archivo}
+                onChange={(event) =>
+                  setFormularioArchivo((actual) => ({
+                    ...actual,
+                    ruta_archivo: event.target.value,
+                  }))
+                }
+                placeholder="Ejemplo: /archivos/PED-001/ficha.pdf o https://..."
+                disabled={guardandoArchivo}
+                required
+              />
+            </label>
+          </div>
+
+          <p className="documents-modal-note">
+            Este formulario respeta exactamente tu backend actual: id_pedido,
+            nombre_archivo y ruta_archivo. El sistema registra la referencia del
+            documento y permite abrirla desde el panel.
+          </p>
+
+          <div className="dashboard-modal-actions">
+            <button
+              type="button"
+              className="dashboard-secondary-button"
+              onClick={cerrarModalArchivo}
+              disabled={guardandoArchivo}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="dashboard-primary-button"
+              disabled={guardandoArchivo}
+            >
+              {guardandoArchivo ? "Guardando..." : "Registrar archivo"}
+            </button>
+          </div>
+        </form>
+      </ModalBase>
+
+      <ModalBase
         abierto={modalEstadoAbierto}
         titulo={tituloModalEstado[tipoEstadoModal] || "Pedidos por estado"}
         onCerrar={cerrarModalEstado}
         ancho="grande"
       >
+        <p className="dashboard-modal-description progress-modal-description">
+          {esSupervisor
+            ? "Seleccione el avance de cada pedido. El progreso se registra en pasos de 10% y se refleja en el panel al guardar el cambio."
+            : "Vista de consulta. El progreso de los pedidos solo puede ser modificado por un supervisor."}
+        </p>
         <div className="dashboard-table-wrapper">
           <table className="dashboard-table">
             <thead>
@@ -3306,21 +5806,25 @@ function SupervisorDashboard({ usuario, onLogout }) {
                   </td>
                   <td>{pedido.fechaEntrega}</td>
                   <td>
-                    <select
-                      value={pedido.progreso}
-                      onChange={(event) =>
-                        actualizarProgreso(pedido, event.target.value)
-                      }
-                      aria-label={`Actualizar progreso de ${pedido.codigo}`}
-                    >
-                      {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(
-                        (valor) => (
-                          <option key={valor} value={valor}>
-                            {valor}%
-                          </option>
-                        )
-                      )}
-                    </select>
+                    {esSupervisor ? (
+                      <select
+                        value={pedido.progreso}
+                        onChange={(event) =>
+                          actualizarProgreso(pedido, event.target.value)
+                        }
+                        aria-label={`Actualizar progreso de ${pedido.codigo}`}
+                      >
+                        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(
+                          (valor) => (
+                            <option key={valor} value={valor}>
+                              {valor}%
+                            </option>
+                          )
+                        )}
+                      </select>
+                    ) : (
+                      <strong>{pedido.progreso}%</strong>
+                    )}
                   </td>
                   <td>
                     <div className="progress-content">
