@@ -3050,14 +3050,8 @@ function SupervisorDashboard({ usuario, onLogout }) {
       setErrorInsumo("Seleccione un insumo.");
       return;
     }
-    // SOLO_ENTEROS_INVENTARIO
-    if (
-      !Number.isInteger(stockActual) ||
-      !Number.isInteger(stockMinimo) ||
-      stockActual < 0 ||
-      stockMinimo < 0
-    ) {
-      setErrorInsumo("Stock contado y stock mínimo deben ser números enteros iguales o mayores a 0.");
+    if (Number.isNaN(stockActual) || Number.isNaN(stockMinimo) || stockActual < 0 || stockMinimo < 0) {
+      setErrorInsumo("Ingrese valores de stock válidos.");
       return;
     }
 
@@ -5238,28 +5232,26 @@ function SupervisorDashboard({ usuario, onLogout }) {
             <label className="dashboard-field">
               <span>Stock contado *</span>
               <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
+                type="number"
+                min="0"
+                step="0.01"
                 value={formularioConteoInsumo.stock_actual}
-                onChange={(event) => {
-                  const valor = event.target.value.replace(/\D/g, "");
-                  setFormularioConteoInsumo((actual) => ({ ...actual, stock_actual: valor }));
-                }}
+                onChange={(event) =>
+                  setFormularioConteoInsumo((actual) => ({ ...actual, stock_actual: event.target.value }))
+                }
                 required
               />
             </label>
             <label className="dashboard-field">
               <span>Stock mínimo *</span>
               <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
+                type="number"
+                min="0"
+                step="0.01"
                 value={formularioConteoInsumo.stock_minimo}
-                onChange={(event) => {
-                  const valor = event.target.value.replace(/\D/g, "");
-                  setFormularioConteoInsumo((actual) => ({ ...actual, stock_minimo: valor }));
-                }}
+                onChange={(event) =>
+                  setFormularioConteoInsumo((actual) => ({ ...actual, stock_minimo: event.target.value }))
+                }
                 required
               />
             </label>

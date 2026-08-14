@@ -1,118 +1,61 @@
-.maquila-overlay{
-
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.45);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:9999;
-
+.maquila-create-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(13, 29, 50, .46);
+  backdrop-filter: blur(2px);
+  font-family: "Segoe UI", Arial, sans-serif;
 }
 
-
-
-.maquila-modal{
-
-background:white;
-width:420px;
-border-radius:15px;
-padding:25px;
-box-shadow:0 10px 30px rgba(0,0,0,.3);
-
+.maquila-create-modal {
+  width: min(520px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #dfe7f0;
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(15, 36, 62, .22);
 }
 
-
-
-.maquila-modal header{
-
-display:flex;
-justify-content:space-between;
-align-items:center;
-
+.maquila-create-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 15px;
+  color: #fff;
+  background: linear-gradient(110deg, #0757a6, #0a6ecb);
 }
 
-
-
-.maquila-modal header h2{
-
-color:#174a7c;
-
+.maquila-create-header span { font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.maquila-create-header h2 { margin: 4px 0 0; font-size: 18px; }
+.maquila-create-header button {
+  width: 32px; height: 32px; border: 0; border-radius: 8px; color: #fff;
+  background: rgba(255,255,255,.14); font-size: 22px; cursor: pointer;
 }
 
-
-
-.maquila-modal header button{
-
-border:none;
-background:none;
-font-size:25px;
-cursor:pointer;
-
+.maquila-create-form { display: grid; gap: 13px; padding: 20px; }
+.maquila-create-form label { display: grid; gap: 6px; }
+.maquila-create-form label > span { color: #364a63; font-size: 10px; font-weight: 800; }
+.maquila-create-form input,
+.maquila-create-form select {
+  width: 100%; min-height: 40px; padding: 0 11px; color: #20334c; background: #fff;
+  border: 1px solid #dce4ed; border-radius: 8px; outline: none; font: inherit; font-size: 11px;
 }
+.maquila-create-form input:focus,
+.maquila-create-form select:focus { border-color: #75abe0; box-shadow: 0 0 0 3px rgba(7,87,166,.08); }
+.maquila-create-error { padding: 10px 12px; color: #9b2c24; background: #fff2f0; border: 1px solid #f4ccc8; border-radius: 8px; font-size: 10px; }
+.maquila-create-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 5px; }
+.maquila-create-actions button { min-height: 38px; padding: 0 15px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 10px; }
+.maquila-create-actions .secondary { color: #52647a; background: #fff; border: 1px solid #dce4ed; }
+.maquila-create-actions .primary { color: #fff; background: #0757a6; border: 1px solid #0757a6; }
+.maquila-create-actions button:disabled { opacity: .6; cursor: not-allowed; }
 
-
-
-.maquila-modal label{
-
-display:flex;
-flex-direction:column;
-gap:7px;
-margin-top:15px;
-font-weight:bold;
-
-}
-
-
-
-.maquila-modal input,
-.maquila-modal select{
-
-padding:12px;
-border-radius:8px;
-border:1px solid #ccc;
-
-}
-
-
-
-.maquila-actions{
-
-display:flex;
-justify-content:flex-end;
-gap:10px;
-margin-top:25px;
-
-}
-
-
-
-.maquila-actions button{
-
-padding:10px 20px;
-border-radius:8px;
-border:none;
-cursor:pointer;
-
-}
-
-
-
-.maquila-actions button:last-child{
-
-background:#1769aa;
-color:white;
-
-}
-
-
-
-.maquila-error{
-
-background:#ffe1e1;
-color:#9b0000;
-padding:10px;
-border-radius:8px;
-margin-top:15px;
-
+@media (max-width: 560px) {
+  .maquila-create-overlay { padding: 10px; }
+  .maquila-create-actions { flex-direction: column-reverse; }
+  .maquila-create-actions button { width: 100%; }
 }

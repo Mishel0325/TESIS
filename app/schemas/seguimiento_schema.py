@@ -1,24 +1,65 @@
-from enum import Enum
-from pydantic import BaseModel
 from datetime import datetime
 
-class SeguimientoEstado(str, Enum):
-    PENDIENTE = 'Pendiente'
-    EN_PROCESO = 'En Proceso'
-    FINALIZADO = 'Finalizado'
-    RETRASADO = 'Retrasado'
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-class SeguimientoCreate(BaseModel):
-    id_pedido: int
-    id_fase: int | None = None
-    porcentaje_avance: float | None = 0.00
+
+class SeguimientoBase(BaseModel):
+    id_pedido: int = Field(..., gt=0)
+    id_fase: int = Field(..., gt=0)
+    porcentaje_avance: float = Field(..., ge=0, le=100)
+    fecha_inicio: datetime
+    fecha_fin: datetime
+    estado: str = Field(..., min_length=1, max_length=50)
+    observacion: str = Field(..., min_length=1, max_length=1000)
+
+    @field_validator("estado", "observacion")
+    @classmethod
+    def limpiar_textos(cls, valor: str):
+        texto = valor.strip()
+        if not texto:
+            raise ValueError("Este campo es obligatorio.")
+        return texto
+
+    @model_validator(mode="after")
+    def validar_fechas(self):
+        if self.fecha_fin < self.fecha_inicio:
+            raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
+        return self
+
+
+class SeguimientoCreate(SeguimientoBase):
+    pass
+
+
+class SeguimientoUpdate(BaseModel):
+    id_pedido: int | None = Field(default=None, gt=0)
+    id_fase: int | None = Field(default=None, gt=0)
+    porcentaje_avance: float | None = Field(default=None, ge=0, le=100)
     fecha_inicio: datetime | None = None
     fecha_fin: datetime | None = None
-    estado: SeguimientoEstado | None = None
-    observacion: str | None = None
+    estado: str | None = Field(default=None, min_length=1, max_length=50)
+    observacion: str | None = Field(default=None, min_length=1, max_length=1000)
 
-class SeguimientoResponse(SeguimientoCreate):
+    @field_validator("estado", "observacion")
+    @classmethod
+    def limpiar_textos(cls, valor: str | None):
+        if valor is None:
+            return None
+        texto = valor.strip()
+        if not texto:
+            raise ValueError("Este campo no puede quedar vacío.")
+        return texto
+
+
+class SeguimientoResponse(BaseModel):
     id_seguimiento: int
+    id_pedido: int
+    id_fase: int | None = None
+    porcentaje_avance: float | None = None
+    fecha_inicio: datetime | None = None
+    fecha_fin: datetime | None = None
+    estado: str | None = None
+    observacion: str | None = None
 
     class Config:
         from_attributes = True

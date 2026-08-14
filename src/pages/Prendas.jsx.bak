@@ -140,7 +140,6 @@ export default function Prendas({
   const [formPrenda, setFormPrenda] = useState(PRENDA_INICIAL);
   const [formFase, setFormFase] = useState(FASE_INICIAL);
   const [formTarea, setFormTarea] = useState(TAREA_INICIAL);
-  const [fasesAbiertas, setFasesAbiertas] = useState(() => new Set());
 
   const usaPrendasExternas = Array.isArray(prendasExternas);
   const usaFasesExternas = Array.isArray(fasesExternas);
@@ -301,16 +300,6 @@ export default function Prendas({
 
   const cerrarModal = () => {
     if (!guardando) setModal(null);
-  };
-
-  const alternarFase = (idFase) => {
-    const clave = String(idFase);
-    setFasesAbiertas((actuales) => {
-      const siguiente = new Set(actuales);
-      if (siguiente.has(clave)) siguiente.delete(clave);
-      else siguiente.add(clave);
-      return siguiente;
-    });
   };
 
   const abrirNuevaPrenda = () => {
@@ -625,26 +614,23 @@ export default function Prendas({
                       const idFase = obtenerIdFase(fase);
                       const nombreFase = fase?.nombre_fase ?? "Fase sin nombre";
                       const tareasFase = tareasAgrupadas.get(String(idFase)) || [];
-                      const faseAbierta = fasesAbiertas.has(String(idFase));
                       return (
                         <div className="prendas-flow-step" key={idFase}>
                           <div className="prendas-flow-rail" aria-hidden="true"><span className="prendas-flow-number">{orden}</span>{indice < fasesSeleccionadas.length - 1 && <span className="prendas-flow-line" />}</div>
-                          <div className={`prendas-flow-card ${faseAbierta ? "is-open" : "is-collapsed"}`}>
-                            <div className="prendas-phase-header prendas-phase-toggle" role="button" tabIndex={0} aria-expanded={faseAbierta} onClick={() => alternarFase(idFase)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); alternarFase(idFase); } }}>
+                          <div className="prendas-flow-card">
+                            <div className="prendas-phase-header">
                               <div><span className="prendas-flow-kicker">FASE {String(orden).padStart(2, "0")}</span><strong>{nombreFase}</strong></div>
                               <div className="prendas-phase-right">
                                 <div className="prendas-phase-meta"><span className="prendas-phase-id">ID {idFase}</span><span className="prendas-task-count">{tareasFase.length} tareas</span></div>
-                                <div className="prendas-phase-actions" onClick={(event) => event.stopPropagation()}>
+                                <div className="prendas-phase-actions">
                                   <button type="button" className="prendas-action-button add" onClick={() => abrirNuevaTarea(fase)} title="Crear tarea"><Icono nombre="plus" size={13} /><span>Tarea</span></button>
                                   <button type="button" className="prendas-action-button" onClick={() => abrirEditarFase(fase)} title="Editar fase"><Icono nombre="edit" size={13} /></button>
                                   <button type="button" className="prendas-action-button danger" onClick={() => abrirEliminarFase(fase)} title="Eliminar fase"><Icono nombre="trash" size={13} /></button>
                                 </div>
-                                <span className={`prendas-phase-chevron ${faseAbierta ? "is-open" : ""}`} aria-hidden="true"><Icono nombre="chevron" size={15} /></span>
                               </div>
                             </div>
 
-                            {faseAbierta && (
-                              <div className="prendas-task-list">
+                            <div className="prendas-task-list">
                               {tareasFase.length === 0 ? (
                                 <div className="prendas-task-empty"><span>Sin tareas registradas.</span><button type="button" onClick={() => abrirNuevaTarea(fase)}><Icono nombre="plus" size={13} />Agregar primera tarea</button></div>
                               ) : tareasFase.map((tarea, indiceTarea) => {
@@ -664,8 +650,7 @@ export default function Prendas({
                                   </div>
                                 );
                               })}
-                              </div>
-                            )}
+                            </div>
                           </div>
                         </div>
                       );

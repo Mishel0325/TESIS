@@ -34,7 +34,10 @@ class ControlCalidadUpdate(BaseModel):
 
     @field_validator("observaciones")
     @classmethod
-    def validar_observaciones_si_se_envian(cls, valor: str | None) -> str | None:
+    def validar_observaciones_si_se_envian(
+        cls,
+        valor: str | None,
+    ) -> str | None:
         if valor is None:
             return None
         valor = valor.strip()

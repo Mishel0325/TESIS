@@ -6492,3 +6492,68 @@ button.enterprise-kpi-card:hover {
 .enterprise-prendas-section.is-read-only .prendas-empty-action {
   display: none !important;
 }
+
+/* =============================================================
+   SEGUIMIENTO POR FASE + CONFIRMACIÓN INTERNA DE INFORMES
+   ============================================================= */
+.seguimiento-row-button {
+  width: auto !important;
+  min-height: 32px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.seguimiento-form .dashboard-form-grid {
+  margin-top: 12px;
+}
+
+.seguimiento-order-summary {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  color: #173a5e;
+  background: #f5f9fe;
+  border: 1px solid #dce9f7;
+  border-radius: 9px;
+}
+
+.seguimiento-order-summary span {
+  color: #7a8798;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.seguimiento-order-summary strong { font-size: 14px; }
+.seguimiento-order-summary small { color: #66758a; font-size: 10px; }
+
+.confirm-action-modal {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 14px;
+  background: #fff8f7;
+  border: 1px solid #f4d3cf;
+  border-radius: 10px;
+}
+
+.confirm-action-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  color: #b42318;
+  background: #fee9e7;
+  border-radius: 9px;
+}
+
+.confirm-action-copy { min-width: 0; }
+.confirm-action-copy strong { color: #85221b; font-size: 13px; }
+.confirm-action-copy p {
+  margin: 6px 0 0;
+  color: #5f6876;
+  font-size: 10.5px;
+  line-height: 1.55;
+}
