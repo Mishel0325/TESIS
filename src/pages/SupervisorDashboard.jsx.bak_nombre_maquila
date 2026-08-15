@@ -494,7 +494,7 @@ function construirPdfInforme(detalle, codigoAlternativo = "") {
     "Sin especificar"
   );
   const nombreMaquila = textoPlanoSeguro(
-    maquila.nombre_maquila || maquila.nombre,
+    maquila.nombre_maquila || maquila.nombre || pedido.id_maquila,
     "Sin asignar"
   );
   const faseActual = textoPlanoSeguro(
@@ -3471,7 +3471,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
     const codigo = pedido.codigo_pedido || formularioInforme.codigo_pedido || "Sin código";
     const prenda = pedido.tipo_prenda || pedido.nombre_prenda || "Sin especificar";
     const nombreMaquila =
-      maquila.nombre_maquila || maquila.nombre || "Sin asignar";
+      maquila.nombre_maquila || maquila.nombre || pedido.id_maquila || "Sin asignar";
     const faseActual = fase.nombre_fase || fase.nombre || "Sin fase registrada";
 
     const filasSeguimiento = seguimientosInforme.length
@@ -5692,6 +5692,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
                 <strong>
                   {informeDetalle.maquila?.nombre_maquila ||
                     informeDetalle.maquila?.nombre ||
+                    informeDetalle.pedido?.id_maquila ||
                     "Sin asignar"}
                 </strong>
               </div>

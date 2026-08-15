@@ -1,6 +1,15 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+EstadoSeguimiento = Literal[
+    "Pendiente",
+    "En Producción",
+    "Finalizado",
+    "Retrasado",
+]
 
 
 class SeguimientoBase(BaseModel):
@@ -9,21 +18,23 @@ class SeguimientoBase(BaseModel):
     porcentaje_avance: float = Field(..., ge=0, le=100)
     fecha_inicio: datetime
     fecha_fin: datetime
-    estado: str = Field(..., min_length=1, max_length=50)
+    estado: EstadoSeguimiento
     observacion: str = Field(..., min_length=1, max_length=1000)
 
-    @field_validator("estado", "observacion")
+    @field_validator("observacion")
     @classmethod
-    def limpiar_textos(cls, valor: str):
+    def limpiar_observacion(cls, valor: str):
         texto = valor.strip()
         if not texto:
-            raise ValueError("Este campo es obligatorio.")
+            raise ValueError("La observación es obligatoria.")
         return texto
 
     @model_validator(mode="after")
     def validar_fechas(self):
         if self.fecha_fin < self.fecha_inicio:
-            raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
+            raise ValueError(
+                "La fecha de fin no puede ser anterior a la fecha de inicio."
+            )
         return self
 
 
@@ -37,17 +48,17 @@ class SeguimientoUpdate(BaseModel):
     porcentaje_avance: float | None = Field(default=None, ge=0, le=100)
     fecha_inicio: datetime | None = None
     fecha_fin: datetime | None = None
-    estado: str | None = Field(default=None, min_length=1, max_length=50)
+    estado: EstadoSeguimiento | None = None
     observacion: str | None = Field(default=None, min_length=1, max_length=1000)
 
-    @field_validator("estado", "observacion")
+    @field_validator("observacion")
     @classmethod
-    def limpiar_textos(cls, valor: str | None):
+    def limpiar_observacion_si_se_envia(cls, valor: str | None):
         if valor is None:
             return None
         texto = valor.strip()
         if not texto:
-            raise ValueError("Este campo no puede quedar vacío.")
+            raise ValueError("La observación no puede quedar vacía.")
         return texto
 
 
@@ -58,7 +69,7 @@ class SeguimientoResponse(BaseModel):
     porcentaje_avance: float | None = None
     fecha_inicio: datetime | None = None
     fecha_fin: datetime | None = None
-    estado: str | None = None
+    estado: EstadoSeguimiento | None = None
     observacion: str | None = None
 
     class Config:

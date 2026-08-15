@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_role
 from app.database import get_db
 from app.models.informe_model import Informe
-from app.models.maquila_model import Maquila
 from app.models.pedido_model import Pedido
 from app.models.seguimiento_model import Seguimiento
 from app.schemas.informe_schema import (
@@ -100,14 +99,6 @@ def _detalle(informe: Informe, pedido: Pedido, db: Session):
     seguimientos = _seguimientos_pedido(pedido.id_pedido, db)
     fase_actual = getattr(seguimientos[-1], "fase", None) if seguimientos else None
     maquila = getattr(pedido, "maquila", None)
-
-    # Si la relación no está disponible, buscar la maquila por id.
-    if maquila is None and getattr(pedido, "id_maquila", None):
-        maquila = (
-            db.query(Maquila)
-            .filter(Maquila.id_maquila == pedido.id_maquila)
-            .first()
-        )
 
     return {
         "id_informe": informe.id_informe,
