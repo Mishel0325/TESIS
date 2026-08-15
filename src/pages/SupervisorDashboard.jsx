@@ -11,15 +11,10 @@ import logoMaquila from "../assets/logo-maquila.png";
 import CrearPedidoModal from "./CrearPedidoModal";
 import "./SupervisorDashboard.css";
 
-// Rediseño visual 2026: conserva la lógica/API existente y cambia únicamente la presentación.
 import CrearMaquilaModal from "../components/CrearMaquilaModal";
 import UsuariosModal from "../components/UsuariosModal";
 import Prendas from "./Prendas";
-/*
- * IMPORTANTE:
- * La primera ruta debe ser la ruta real de tu backend.
- * El código prueba las siguientes únicamente cuando recibe 404 o 405.
- */
+
 const ENDPOINTS = {
   pedidos: ["/pedidos/"],
   seguimientos: ["/seguimiento/", "/seguimientos/"],
@@ -27,9 +22,6 @@ const ENDPOINTS = {
   enviosInsumos: ["/envios_insumos/"],
   maquilas: ["/maquilas/"],
   controlCalidad: ["/control_calidad/"],
-  // Se deja también la ruta duplicada como respaldo porque en tu Swagger actual
-  // aparecen prefijos agregados desde main.py. Al reemplazar el main corregido,
-  // las rutas limpias serán /archivos/ y /informes/.
   archivos: ["/archivos/", "/archivos/archivos/"],
   informes: ["/informes/", "/informes/informes/"],
   fases: ["/fases/", "/fases", "/fase/", "/fase"],
@@ -85,9 +77,7 @@ const FORMULARIO_ARCHIVO_VACIO = {
   ruta_archivo: "",
 };
 
-/* =====================================================
-   FUNCIONES AUXILIARES
-===================================================== */
+
 
 function extraerLista(respuesta) {
   const data = respuesta?.data;
@@ -976,6 +966,28 @@ function obtenerTipoEstado(pedido) {
   return "activo";
 }
 
+function normalizarEstadoEditable(estado) {
+  const valor = String(estado || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (valor === "finalizado") return "Finalizado";
+  if (valor === "entregado") return "Entregado";
+
+  if (
+    valor === "en produccion" ||
+    valor === "en proceso" ||
+    valor === "a tiempo" ||
+    valor === "retrasado"
+  ) {
+    return "En Produccion";
+  }
+
+  return "Pendiente";
+}
+
 function crearFormularioDesdePedido(pedido) {
   return {
     codigo_pedido: pedido?.codigo || "",
@@ -991,7 +1003,7 @@ function crearFormularioDesdePedido(pedido) {
     fecha_ingreso: pedido?.fechaIngresoISO || "",
     fecha_entrega: pedido?.fechaEntregaISO || "",
     prioridad: pedido?.prioridad || "Media",
-    estado: pedido?.estado || "Pendiente",
+    estado: normalizarEstadoEditable(pedido?.estado),
     observaciones:
       pedido?.observaciones === "Sin observaciones"
         ? ""
@@ -1009,7 +1021,7 @@ function construirPayload(formulario) {
     fecha_ingreso: formulario.fecha_ingreso || null,
     fecha_entrega: formulario.fecha_entrega || null,
     prioridad: formulario.prioridad || "Media",
-    estado: formulario.estado || "Pendiente",
+    estado: normalizarEstadoEditable(formulario.estado),
     observaciones: formulario.observaciones.trim() || null,
   };
 
@@ -1263,11 +1275,9 @@ function CamposPedido({ formulario, onChange, deshabilitado = false }) {
           required
         >
           <option value="Pendiente">Pendiente</option>
-          <option value="En proceso">En proceso</option>
-          <option value="Retrasado">Retrasado</option>
+          <option value="En Produccion">En Producción</option>
           <option value="Finalizado">Finalizado</option>
           <option value="Entregado">Entregado</option>
-          <option value="Cancelado">Cancelado</option>
         </select>
       </label>
 
@@ -1843,6 +1853,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const [errorControlCalidad, setErrorControlCalidad] = useState("");
   const [guardandoControlCalidad, setGuardandoControlCalidad] = useState(false);
   const [eliminandoControlCalidadId, setEliminandoControlCalidadId] = useState(null);
+  const [controlCalidadPendienteEliminar, setControlCalidadPendienteEliminar] = useState(null);
 
   const [busquedaInformes, setBusquedaInformes] = useState("");
   const [modalInformeAbierto, setModalInformeAbierto] = useState(false);
@@ -3238,21 +3249,28 @@ function SupervisorDashboard({ usuario, onLogout }) {
     }
   };
 
-  const eliminarControlCalidad = async (control) => {
+  const eliminarControlCalidad = (control) => {
     if (!esSupervisor) return;
     if (!control?.id) return;
 
-    const confirmado = window.confirm(
-      `¿Eliminar la revisión de calidad de ${control.codigoPedido}?`
-    );
-    if (!confirmado) return;
+    setError("");
+    setControlCalidadPendienteEliminar(control);
+  };
+
+  const confirmarEliminarControlCalidad = async () => {
+    const control = controlCalidadPendienteEliminar;
+
+    if (!esSupervisor || !control?.id) return;
 
     setEliminandoControlCalidadId(control.id);
     setError("");
 
     try {
       await eliminarControlCalidadDisponible(control.id);
-      setMensaje("Control de calidad eliminado correctamente.");
+      setControlCalidadPendienteEliminar(null);
+      setMensaje(
+        `La revisión de calidad de ${control.codigoPedido} fue eliminada correctamente.`
+      );
       await cargarInformacion(false);
     } catch (err) {
       setError(
@@ -5860,6 +5878,56 @@ function SupervisorDashboard({ usuario, onLogout }) {
             </button>
           </div>
         </form>
+      </ModalBase>
+
+      <ModalBase
+        abierto={Boolean(controlCalidadPendienteEliminar)}
+        titulo="Eliminar revisión de calidad"
+        onCerrar={() => {
+          if (!eliminandoControlCalidadId) {
+            setControlCalidadPendienteEliminar(null);
+          }
+        }}
+        ancho="normal"
+      >
+        <div className="confirm-action-modal">
+          <div className="confirm-action-icon">
+            <Icono nombre="trash" size={24} />
+          </div>
+
+          <div className="confirm-action-copy">
+            <strong>¿Desea eliminar esta revisión de calidad?</strong>
+            <p>
+              Se eliminará la revisión del pedido{" "}
+              <b>
+                {controlCalidadPendienteEliminar?.codigoPedido || "seleccionado"}
+              </b>
+              . Esta acción no elimina el pedido y no se puede deshacer.
+            </p>
+          </div>
+        </div>
+
+        <div className="dashboard-modal-actions">
+          <button
+            type="button"
+            className="dashboard-secondary-button"
+            onClick={() => setControlCalidadPendienteEliminar(null)}
+            disabled={Boolean(eliminandoControlCalidadId)}
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-danger-button"
+            onClick={confirmarEliminarControlCalidad}
+            disabled={Boolean(eliminandoControlCalidadId)}
+          >
+            {eliminandoControlCalidadId
+              ? "Eliminando..."
+              : "Sí, eliminar revisión"}
+          </button>
+        </div>
       </ModalBase>
 
       <ModalBase
