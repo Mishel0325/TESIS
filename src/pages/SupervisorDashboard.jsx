@@ -11,10 +11,16 @@ import logoMaquila from "../assets/logo-maquila.png";
 import CrearPedidoModal from "./CrearPedidoModal";
 import "./SupervisorDashboard.css";
 
+// Rediseño visual 2026: conserva la lógica/API existente y cambia únicamente la presentación.
 import CrearMaquilaModal from "../components/CrearMaquilaModal";
-import UsuariosModal from "../components/UsuariosModal";
+import EditarMaquilaModal from "../components/EditarMaquilaModal";
+import UsuariosGestionModal from "./UsuariosGestionModal";
 import Prendas from "./Prendas";
-
+/*
+ * IMPORTANTE:
+ * La primera ruta debe ser la ruta real de tu backend.
+ * El código prueba las siguientes únicamente cuando recibe 404 o 405.
+ */
 const ENDPOINTS = {
   pedidos: ["/pedidos/"],
   seguimientos: ["/seguimiento/", "/seguimientos/"],
@@ -22,12 +28,19 @@ const ENDPOINTS = {
   enviosInsumos: ["/envios_insumos/"],
   maquilas: ["/maquilas/"],
   controlCalidad: ["/control_calidad/"],
+  // Se deja también la ruta duplicada como respaldo porque en tu Swagger actual
+  // aparecen prefijos agregados desde main.py. Al reemplazar el main corregido,
+  // las rutas limpias serán /archivos/ y /informes/.
   archivos: ["/archivos/", "/archivos/archivos/"],
   informes: ["/informes/", "/informes/informes/"],
   fases: ["/fases/", "/fases", "/fase/", "/fase"],
   tareas: ["/tareas/", "/tareas", "/tarea/", "/tarea"],
   prendas: ["/prendas/"],
 };
+
+const DURACION_SESION_MS = 60 * 60 * 1000;
+const CLAVE_INICIO_SESION = "session_started_at";
+const CLAVE_EXPIRACION_SESION = "session_expires_at";
 
 const FORMULARIO_VACIO = {
   codigo_pedido: "",
@@ -77,7 +90,9 @@ const FORMULARIO_ARCHIVO_VACIO = {
   ruta_archivo: "",
 };
 
-
+/* =====================================================
+   FUNCIONES AUXILIARES
+===================================================== */
 
 function extraerLista(respuesta) {
   const data = respuesta?.data;
@@ -170,6 +185,28 @@ async function eliminarPedidoDisponible(idPedido) {
   }
 
   throw ultimoError || new Error("No se encontró la ruta para eliminar pedidos.");
+}
+
+
+async function eliminarMaquilaDisponible(idMaquila) {
+  let ultimoError = null;
+
+  for (const ruta of ENDPOINTS.maquilas) {
+    const url = `${limpiarRuta(ruta)}/${idMaquila}`;
+
+    try {
+      return await api.delete(url);
+    } catch (error) {
+      ultimoError = error;
+      const estado = error.response?.status;
+
+      if (estado !== 404 && estado !== 405) {
+        throw error;
+      }
+    }
+  }
+
+  throw ultimoError || new Error("No se encontró la ruta para eliminar maquilas.");
 }
 
 async function crearInsumoDisponible(payload) {
@@ -1804,9 +1841,25 @@ function GraficoTendencia({ datos }) {
 }
 
 function SupervisorDashboard({ usuario, onLogout }) {
-  const esSupervisor = Number(usuario?.id_rol) === 1;
+  const rolUsuario = String(
+    usuario?.rol?.nombre ??
+      usuario?.rol ??
+      usuario?.nombre_rol ??
+      usuario?.role ??
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const esSupervisor =
+    Number(usuario?.id_rol) === 1 ||
+    rolUsuario === "supervisor" ||
+    rolUsuario === "administrador" ||
+    rolUsuario === "admin";
 
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
+  const [sesionExpirada, setSesionExpirada] = useState(false);
+  const [borradorGuardadoAlExpirar, setBorradorGuardadoAlExpirar] = useState(false);
   const [menuCrearAbierto, setMenuCrearAbierto] = useState(false);
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [busquedaGeneral, setBusquedaGeneral] = useState("");
@@ -1817,6 +1870,10 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const [modalCrearPedidoAbierto, setModalCrearPedidoAbierto] = useState(false);
   const [modalMaquilaAbierto, setModalMaquilaAbierto] = useState(false);
   const [modalListaMaquilasAbierto, setModalListaMaquilasAbierto] = useState(false);
+  const [maquilaEditar, setMaquilaEditar] = useState(null);
+  const [maquilaPendienteEliminar, setMaquilaPendienteEliminar] = useState(null);
+  const [eliminandoMaquilaId, setEliminandoMaquilaId] = useState(null);
+  const [errorMaquila, setErrorMaquila] = useState("");
   const [modalUsuariosAbierto, setModalUsuariosAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
@@ -1904,6 +1961,236 @@ function SupervisorDashboard({ usuario, onLogout }) {
   const [errorEliminar, setErrorEliminar] = useState("");
 
   const menuRef = useRef(null);
+
+  const claveBorradorTrabajo = useMemo(() => {
+    const idCuenta = usuario?.id_cuenta ?? "sin-cuenta";
+    const idUsuario =
+      usuario?.id ??
+      usuario?.id_usuario ??
+      usuario?.correo ??
+      "sin-usuario";
+
+    return `maquila:borrador:${idCuenta}:${idUsuario}`;
+  }, [usuario]);
+
+  const elementoVisible = useCallback((elemento) => {
+    if (!elemento) return false;
+    const estilo = window.getComputedStyle(elemento);
+    const rect = elemento.getBoundingClientRect();
+    return (
+      estilo.display !== "none" &&
+      estilo.visibility !== "hidden" &&
+      rect.width > 0 &&
+      rect.height > 0
+    );
+  }, []);
+
+  const obtenerAlcanceFormulario = useCallback((formulario) => {
+    if (!formulario) return "";
+
+    const contenedor =
+      formulario.closest(
+        '[role="dialog"], .dashboard-modal, .maquila-create-modal, .users-modal, .modal-editar-pedido, .modal-content'
+      ) || formulario.parentElement;
+
+    const titulo =
+      contenedor?.querySelector("h1, h2, h3")?.textContent?.trim() ||
+      formulario.getAttribute("aria-label") ||
+      "Formulario";
+
+    const detalle =
+      formulario.querySelector(
+        ".dashboard-selected-order strong, .seguimiento-order-summary strong"
+      )?.textContent?.trim() || "";
+
+    return detalle ? `${titulo} | ${detalle}` : titulo;
+  }, []);
+
+  const claveCampoFormulario = useCallback((campo, indice) => {
+    const nombre =
+      campo.getAttribute("name") ||
+      campo.getAttribute("id") ||
+      campo.getAttribute("aria-label");
+
+    if (nombre) return nombre;
+
+    const etiqueta =
+      campo.closest("label")?.querySelector("span")?.textContent?.trim();
+
+    return etiqueta || `campo-${indice}`;
+  }, []);
+
+  const guardarBorradorTrabajoVisible = useCallback(() => {
+    try {
+      const formulariosVisibles = Array.from(
+        document.querySelectorAll("form")
+      ).filter(elementoVisible);
+
+      const activo = document.activeElement?.closest?.("form");
+      const formulario =
+        activo && elementoVisible(activo)
+          ? activo
+          : formulariosVisibles[formulariosVisibles.length - 1];
+
+      if (!formulario) return false;
+
+      const campos = Array.from(
+        formulario.querySelectorAll("input, select, textarea")
+      )
+        .filter((campo) => {
+          const tipo = String(campo.getAttribute("type") || "").toLowerCase();
+          return ![
+            "password",
+            "hidden",
+            "submit",
+            "button",
+            "reset",
+            "file",
+          ].includes(tipo);
+        })
+        .map((campo, indice) => {
+          const tipo = String(campo.getAttribute("type") || "").toLowerCase();
+          return {
+            clave: claveCampoFormulario(campo, indice),
+            tipo,
+            valor: campo.value ?? "",
+            checked:
+              tipo === "checkbox" || tipo === "radio"
+                ? Boolean(campo.checked)
+                : undefined,
+          };
+        });
+
+      if (!campos.length) return false;
+
+      localStorage.setItem(
+        claveBorradorTrabajo,
+        JSON.stringify({
+          alcance: obtenerAlcanceFormulario(formulario),
+          guardado_en: new Date().toISOString(),
+          campos,
+        })
+      );
+
+      return true;
+    } catch (error) {
+      console.error("No se pudo guardar el borrador de trabajo:", error);
+      return false;
+    }
+  }, [
+    claveBorradorTrabajo,
+    claveCampoFormulario,
+    elementoVisible,
+    obtenerAlcanceFormulario,
+  ]);
+
+  const aplicarValorReact = useCallback((campo, dato) => {
+    try {
+      const tipo = String(campo.getAttribute("type") || "").toLowerCase();
+
+      if (tipo === "checkbox" || tipo === "radio") {
+        const descriptor = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "checked"
+        );
+        descriptor?.set?.call(campo, Boolean(dato.checked));
+        campo.dispatchEvent(new Event("change", { bubbles: true }));
+        return;
+      }
+
+      let prototipo = HTMLInputElement.prototype;
+      if (campo instanceof HTMLSelectElement) {
+        prototipo = HTMLSelectElement.prototype;
+      } else if (campo instanceof HTMLTextAreaElement) {
+        prototipo = HTMLTextAreaElement.prototype;
+      }
+
+      const descriptor = Object.getOwnPropertyDescriptor(prototipo, "value");
+      descriptor?.set?.call(campo, dato.valor ?? "");
+      campo.dispatchEvent(new Event("input", { bubbles: true }));
+      campo.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (error) {
+      console.error("No se pudo restaurar un campo del borrador:", error);
+    }
+  }, []);
+
+  const intentarRestaurarBorrador = useCallback(() => {
+    const textoBorrador = localStorage.getItem(claveBorradorTrabajo);
+    if (!textoBorrador) return false;
+
+    let borrador;
+    try {
+      borrador = JSON.parse(textoBorrador);
+    } catch {
+      localStorage.removeItem(claveBorradorTrabajo);
+      return false;
+    }
+
+    const formularios = Array.from(
+      document.querySelectorAll("form")
+    ).filter(elementoVisible);
+
+    const formulario = formularios.find(
+      (item) => obtenerAlcanceFormulario(item) === borrador?.alcance
+    );
+
+    if (!formulario) return false;
+
+    const campos = Array.from(
+      formulario.querySelectorAll("input, select, textarea")
+    ).filter((campo) => {
+      const tipo = String(campo.getAttribute("type") || "").toLowerCase();
+      return tipo !== "password";
+    });
+
+    campos.forEach((campo, indice) => {
+      const clave = claveCampoFormulario(campo, indice);
+      const dato = borrador?.campos?.find((item) => item.clave === clave);
+      if (dato) aplicarValorReact(campo, dato);
+    });
+
+    localStorage.removeItem(claveBorradorTrabajo);
+    setMensaje(
+      "Se recuperó el trabajo que estaba pendiente antes de que expirara la sesión."
+    );
+    return true;
+  }, [
+    aplicarValorReact,
+    claveBorradorTrabajo,
+    claveCampoFormulario,
+    elementoVisible,
+    obtenerAlcanceFormulario,
+  ]);
+
+  const limpiarSesionLocal = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem(CLAVE_INICIO_SESION);
+    localStorage.removeItem(CLAVE_EXPIRACION_SESION);
+  }, []);
+
+  const expirarSesion = useCallback(() => {
+    const borradorGuardado = guardarBorradorTrabajoVisible();
+    setBorradorGuardadoAlExpirar(borradorGuardado);
+    limpiarSesionLocal();
+    setSesionExpirada(true);
+    setMenuUsuarioAbierto(false);
+    setMenuCrearAbierto(false);
+    setBuscadorAbierto(false);
+  }, [guardarBorradorTrabajoVisible, limpiarSesionLocal]);
+
+  const cerrarSesionManual = useCallback(() => {
+    localStorage.removeItem(claveBorradorTrabajo);
+    limpiarSesionLocal();
+    if (typeof onLogout === "function") onLogout();
+    else window.location.reload();
+  }, [claveBorradorTrabajo, limpiarSesionLocal, onLogout]);
+
+  const volverAIniciarSesion = useCallback(() => {
+    setSesionExpirada(false);
+    if (typeof onLogout === "function") onLogout();
+    else window.location.reload();
+  }, [onLogout]);
 
   /* =====================================================
      CARGAR INFORMACIÓN DEL BACKEND
@@ -2020,18 +2307,104 @@ function SupervisorDashboard({ usuario, onLogout }) {
     }
   }, []);
 
+  /* =====================================================
+     CONTROL AUTOMÁTICO DE EXPIRACIÓN DE SESIÓN
+     Duración máxima: 1 hora desde el inicio de sesión.
+  ===================================================== */
   useEffect(() => {
-    cargarInformacion();
-  }, [cargarInformacion]);
+    let inicioSesion = Number(localStorage.getItem(CLAVE_INICIO_SESION));
+    let expiraEn = Number(localStorage.getItem(CLAVE_EXPIRACION_SESION));
+
+    if (!Number.isFinite(inicioSesion) || inicioSesion <= 0) {
+      inicioSesion = Date.now();
+      localStorage.setItem(CLAVE_INICIO_SESION, String(inicioSesion));
+    }
+
+    if (!Number.isFinite(expiraEn) || expiraEn <= 0) {
+      expiraEn = inicioSesion + DURACION_SESION_MS;
+      localStorage.setItem(CLAVE_EXPIRACION_SESION, String(expiraEn));
+    }
+
+    const revisarExpiracion = () => {
+      if (Date.now() >= expiraEn) {
+        expirarSesion();
+        return true;
+      }
+      return false;
+    };
+
+    if (revisarExpiracion()) return undefined;
+
+    const temporizador = window.setTimeout(
+      expirarSesion,
+      Math.max(0, expiraEn - Date.now())
+    );
+
+    const intervaloRevision = window.setInterval(revisarExpiracion, 15000);
+
+    const revisarAlVolver = () => {
+      if (!document.hidden) revisarExpiracion();
+    };
+
+    document.addEventListener("visibilitychange", revisarAlVolver);
+    window.addEventListener("focus", revisarExpiracion);
+
+    return () => {
+      window.clearTimeout(temporizador);
+      window.clearInterval(intervaloRevision);
+      document.removeEventListener("visibilitychange", revisarAlVolver);
+      window.removeEventListener("focus", revisarExpiracion);
+    };
+  }, [expirarSesion]);
+
+  useEffect(() => {
+    const interceptorId = api.interceptors.response.use(
+      (response) => response,
+      (errorRespuesta) => {
+        if (errorRespuesta?.response?.status === 401) {
+          expirarSesion();
+        }
+        return Promise.reject(errorRespuesta);
+      }
+    );
+
+    return () => api.interceptors.response.eject(interceptorId);
+  }, [expirarSesion]);
+
+  useEffect(() => {
+    if (localStorage.getItem(claveBorradorTrabajo)) {
+      setMensaje(
+        "Tiene trabajo pendiente de la sesión anterior. Abra nuevamente el mismo formulario y el sistema recuperará los datos."
+      );
+    }
+  }, [claveBorradorTrabajo]);
+
+  useEffect(() => {
+    const intentar = () => {
+      window.setTimeout(intentarRestaurarBorrador, 80);
+    };
+
+    const observer = new MutationObserver(intentar);
+    observer.observe(document.body, { childList: true, subtree: true });
+    intentar();
+
+    return () => observer.disconnect();
+  }, [intentarRestaurarBorrador]);
+
+  useEffect(() => {
+    if (!sesionExpirada) cargarInformacion();
+  }, [cargarInformacion, sesionExpirada]);
 
   /* Refresco silencioso para cambios hechos desde otra pantalla. */
   useEffect(() => {
+    if (sesionExpirada) return undefined;
+
     const intervaloActualizacion = window.setInterval(() => {
       cargarInformacion(false);
     }, 30000);
 
     return () => window.clearInterval(intervaloActualizacion);
-  }, [cargarInformacion]);
+  }, [cargarInformacion, sesionExpirada]);
 
   useEffect(() => {
     const cerrarMenu = (event) => {
@@ -2694,8 +3067,62 @@ function SupervisorDashboard({ usuario, onLogout }) {
 
   const abrirListaMaquilas = () => {
     if (!esSupervisor) return;
+    setErrorMaquila("");
     setModalListaMaquilasAbierto(true);
     setSidebarAbierto(false);
+  };
+
+  const abrirEditarMaquila = (maquila) => {
+    if (!esSupervisor || !maquila) return;
+
+    setErrorMaquila("");
+    setMaquilaEditar(maquila);
+    setModalListaMaquilasAbierto(false);
+  };
+
+  const solicitarEliminarMaquila = (maquila) => {
+    if (!esSupervisor || !maquila) return;
+    setErrorMaquila("");
+    setMaquilaPendienteEliminar(maquila);
+  };
+
+  const confirmarEliminarMaquila = async () => {
+    if (!esSupervisor || !maquilaPendienteEliminar) return;
+
+    const idMaquila =
+      maquilaPendienteEliminar.id_maquila ??
+      maquilaPendienteEliminar.id;
+
+    if (!idMaquila) {
+      setErrorMaquila("No se pudo identificar la maquila seleccionada.");
+      return;
+    }
+
+    const nombreMaquila =
+      maquilaPendienteEliminar.nombre_maquila ??
+      maquilaPendienteEliminar.nombre ??
+      maquilaPendienteEliminar.nombre_taller ??
+      `Maquila ${idMaquila}`;
+
+    try {
+      setEliminandoMaquilaId(idMaquila);
+      setErrorMaquila("");
+
+      await eliminarMaquilaDisponible(idMaquila);
+
+      setMaquilaPendienteEliminar(null);
+      setMensaje(`La maquila "${nombreMaquila}" fue eliminada correctamente.`);
+      await cargarInformacion(false);
+    } catch (err) {
+      setErrorMaquila(
+        obtenerMensajeError(
+          err,
+          "No se pudo eliminar la maquila seleccionada."
+        )
+      );
+    } finally {
+      setEliminandoMaquilaId(null);
+    }
   };
 
   const abrirModalEstado = (tipo) => {
@@ -3826,7 +4253,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
         <button
           type="button"
           className="enterprise-sidebar-logout"
-          onClick={onLogout}
+          onClick={cerrarSesionManual}
         >
           <Icono nombre="logout" />
           <span>Cerrar sesión</span>
@@ -4033,7 +4460,7 @@ function SupervisorDashboard({ usuario, onLogout }) {
                     <strong>{nombreUsuario}</strong>
                     <span>{usuario?.correo || "Usuario del sistema"}</span>
                   </div>
-                  <button type="button" onClick={onLogout}>
+                  <button type="button" onClick={cerrarSesionManual}>
                     <Icono nombre="logout" size={17} />
                     Cerrar sesión
                   </button>
@@ -4880,13 +5307,29 @@ function SupervisorDashboard({ usuario, onLogout }) {
       <CrearMaquilaModal
         abierto={modalMaquilaAbierto}
         onCerrar={() => setModalMaquilaAbierto(false)}
-        onMaquilaCreada={() => {
-          cargarInformacion(false);
+        onMaquilaCreada={async () => {
+          await cargarInformacion(false);
           setMensaje("Maquila creada correctamente.");
+          setModalListaMaquilasAbierto(true);
         }}
       />
 
-      <UsuariosModal
+      <EditarMaquilaModal
+        abierto={Boolean(maquilaEditar)}
+        maquila={maquilaEditar}
+        onCerrar={() => {
+          setMaquilaEditar(null);
+          setModalListaMaquilasAbierto(true);
+        }}
+        onMaquilaActualizada={async () => {
+          setMaquilaEditar(null);
+          await cargarInformacion(false);
+          setMensaje("Maquila actualizada correctamente.");
+          setModalListaMaquilasAbierto(true);
+        }}
+      />
+
+      <UsuariosGestionModal
         abierto={modalUsuariosAbierto}
         rolInicial={rolNuevoUsuario}
         onCerrar={() => {
@@ -4898,19 +5341,33 @@ function SupervisorDashboard({ usuario, onLogout }) {
       <ModalBase
         abierto={modalListaMaquilasAbierto}
         titulo="Maquilas registradas"
-        onCerrar={() => setModalListaMaquilasAbierto(false)}
+        onCerrar={() => {
+          if (!eliminandoMaquilaId) {
+            setModalListaMaquilasAbierto(false);
+            setErrorMaquila("");
+          }
+        }}
         ancho="grande"
       >
+        {errorMaquila && (
+          <div className="dashboard-modal-error">{errorMaquila}</div>
+        )}
+
         <div className="maquilas-modal-toolbar">
           <div>
-            <strong>{maquilasBackend.length} maquila{maquilasBackend.length === 1 ? "" : "s"}</strong>
+            <strong>
+              {maquilasBackend.length} maquila
+              {maquilasBackend.length === 1 ? "" : "s"}
+            </strong>
             <span>Registradas actualmente en el sistema</span>
           </div>
-          {Number(usuario?.id_rol) === 1 && (
+
+          {esSupervisor && (
             <button
               type="button"
               className="dashboard-primary-button"
               onClick={() => {
+                setErrorMaquila("");
                 setModalListaMaquilasAbierto(false);
                 setModalMaquilaAbierto(true);
               }}
@@ -4930,36 +5387,45 @@ function SupervisorDashboard({ usuario, onLogout }) {
                 <th>Responsable</th>
                 <th>Contacto</th>
                 <th>Estado</th>
+                {esSupervisor && <th>Acciones</th>}
               </tr>
             </thead>
+
             <tbody>
               {maquilasBackend.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="dashboard-empty">
+                  <td
+                    colSpan={esSupervisor ? 6 : 5}
+                    className="dashboard-empty"
+                  >
                     No hay maquilas registradas.
                   </td>
                 </tr>
               ) : (
                 maquilasBackend.map((maquila, index) => {
                   const id = maquila.id_maquila ?? maquila.id ?? index + 1;
+
                   const nombre =
                     maquila.nombre_maquila ??
                     maquila.nombre ??
                     maquila.nombre_taller ??
                     maquila.taller ??
                     `Maquila ${id}`;
+
                   const responsable =
                     maquila.responsable ??
                     maquila.nombre_responsable ??
                     maquila.encargado ??
                     maquila.contacto_nombre ??
                     "Sin registrar";
+
                   const contacto =
                     maquila.telefono ??
                     maquila.celular ??
                     maquila.correo ??
                     maquila.email ??
                     "Sin registrar";
+
                   const estadoMaquila =
                     maquila.estado ??
                     maquila.status ??
@@ -4968,20 +5434,133 @@ function SupervisorDashboard({ usuario, onLogout }) {
                   return (
                     <tr key={`maquila-lista-${id}-${index}`}>
                       <td>{id}</td>
-                      <td><strong>{nombre}</strong></td>
+                      <td>
+                        <strong>{nombre}</strong>
+                      </td>
                       <td>{responsable}</td>
                       <td>{contacto}</td>
                       <td>
-                        <span className={`maquila-status ${String(estadoMaquila).toLowerCase().includes("inact") ? "is-inactive" : "is-active"}`}>
+                        <span
+                          className={`maquila-status ${
+                            String(estadoMaquila)
+                              .toLowerCase()
+                              .includes("inact")
+                              ? "is-inactive"
+                              : "is-active"
+                          }`}
+                        >
                           {String(estadoMaquila)}
                         </span>
                       </td>
+
+                      {esSupervisor && (
+                        <td>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "7px",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              className="document-delete-button"
+                              onClick={() => abrirEditarMaquila(maquila)}
+                              disabled={eliminandoMaquilaId === id}
+                              title="Editar maquila"
+                              aria-label={`Editar ${nombre}`}
+                              style={{
+                                color: "#075fae",
+                                borderColor: "#bcd7ee",
+                                background: "#eef7ff",
+                              }}
+                            >
+                              <Icono nombre="edit" size={14} />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="document-delete-button"
+                              onClick={() => solicitarEliminarMaquila(maquila)}
+                              disabled={eliminandoMaquilaId === id}
+                              title="Eliminar maquila"
+                              aria-label={`Eliminar ${nombre}`}
+                            >
+                              <Icono nombre="trash" size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
               )}
             </tbody>
           </table>
+        </div>
+      </ModalBase>
+
+      <ModalBase
+        abierto={Boolean(maquilaPendienteEliminar)}
+        titulo="Eliminar maquila"
+        onCerrar={() => {
+          if (!eliminandoMaquilaId) {
+            setMaquilaPendienteEliminar(null);
+            setErrorMaquila("");
+          }
+        }}
+        ancho="normal"
+      >
+        {errorMaquila && (
+          <div className="dashboard-modal-error">{errorMaquila}</div>
+        )}
+
+        <div className="confirm-action-modal">
+          <div className="confirm-action-icon">
+            <Icono nombre="trash" size={24} />
+          </div>
+
+          <div className="confirm-action-copy">
+            <strong>¿Desea eliminar esta maquila?</strong>
+            <p>
+              Se intentará eliminar{" "}
+              <b>
+                {maquilaPendienteEliminar?.nombre_maquila ??
+                  maquilaPendienteEliminar?.nombre ??
+                  maquilaPendienteEliminar?.nombre_taller ??
+                  "la maquila seleccionada"}
+              </b>
+              . Esta acción no se puede deshacer.
+            </p>
+            <p>
+              Si la maquila tiene pedidos u otros registros relacionados,
+              el sistema impedirá la eliminación para proteger el historial
+              de producción.
+            </p>
+          </div>
+        </div>
+
+        <div className="dashboard-modal-actions">
+          <button
+            type="button"
+            className="dashboard-secondary-button"
+            onClick={() => {
+              setMaquilaPendienteEliminar(null);
+              setErrorMaquila("");
+            }}
+            disabled={Boolean(eliminandoMaquilaId)}
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-danger-button"
+            onClick={confirmarEliminarMaquila}
+            disabled={Boolean(eliminandoMaquilaId)}
+          >
+            {eliminandoMaquilaId ? "Eliminando..." : "Sí, eliminar maquila"}
+          </button>
         </div>
       </ModalBase>
 
@@ -6153,6 +6732,51 @@ function SupervisorDashboard({ usuario, onLogout }) {
             </button>
           </div>
         </form>
+      </ModalBase>
+
+      <ModalBase
+        abierto={sesionExpirada}
+        titulo="Sesión expirada"
+        onCerrar={() => {}}
+        ancho="normal"
+      >
+        <div className="confirm-action-modal">
+          <div className="confirm-action-icon">
+            <Icono nombre="clock" size={26} />
+          </div>
+
+          <div className="confirm-action-copy">
+            <strong>Su sesión ha expirado</strong>
+            <p>
+              Por seguridad, Maquila System EC mantiene cada sesión activa
+              durante un máximo de 1 hora.
+            </p>
+
+            {borradorGuardadoAlExpirar ? (
+              <p>
+                El trabajo que todavía no había sido guardado se conservó
+                como borrador en este dispositivo. Después de iniciar sesión
+                nuevamente, abra el mismo formulario para continuar desde
+                donde quedó.
+              </p>
+            ) : (
+              <p>
+                Toda la información que ya fue guardada en el sistema
+                permanece registrada. Para continuar debe volver a iniciar sesión.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="dashboard-modal-actions">
+          <button
+            type="button"
+            className="dashboard-primary-button"
+            onClick={volverAIniciarSesion}
+          >
+            Volver a iniciar sesión
+          </button>
+        </div>
       </ModalBase>
     </div>
   );

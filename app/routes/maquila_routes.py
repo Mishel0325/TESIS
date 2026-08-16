@@ -66,6 +66,7 @@ def create_maquila(
         )
         .first()
     )
+
     if existente:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -86,12 +87,14 @@ def create_maquila(
         db.commit()
         db.refresh(db_maquila)
         return db_maquila
+
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="No se pudo crear la maquila por un conflicto de datos.",
         ) from exc
+
     except Exception:
         db.rollback()
         raise
@@ -103,6 +106,7 @@ def list_maquilas(
     current_user: User = Depends(require_role([1, 2])),
 ):
     id_cuenta = _validar_cuenta(current_user)
+
     return (
         db.query(Maquila)
         .filter(Maquila.id_cuenta == id_cuenta)
@@ -118,6 +122,7 @@ def get_maquila(
     current_user: User = Depends(require_role([1, 2])),
 ):
     id_cuenta = _validar_cuenta(current_user)
+
     maquila = (
         db.query(Maquila)
         .filter(
@@ -126,8 +131,13 @@ def get_maquila(
         )
         .first()
     )
+
     if not maquila:
-        raise HTTPException(status_code=404, detail="Maquila no encontrada.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Maquila no encontrada.",
+        )
+
     return maquila
 
 
@@ -139,6 +149,7 @@ def update_maquila(
     current_user: User = Depends(require_role([1])),
 ):
     id_cuenta = _validar_cuenta(current_user)
+
     maquila = (
         db.query(Maquila)
         .filter(
@@ -147,12 +158,21 @@ def update_maquila(
         )
         .first()
     )
-    if not maquila:
-        raise HTTPException(status_code=404, detail="Maquila no encontrada.")
 
-    nombre_recibido = getattr(datos, "nombre", None) or getattr(datos, "nombre_maquila", None)
+    if not maquila:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Maquila no encontrada.",
+        )
+
+    nombre_recibido = (
+        getattr(datos, "nombre", None)
+        or getattr(datos, "nombre_maquila", None)
+    )
+
     if nombre_recibido is not None:
         nuevo_nombre = _obtener_nombre(datos)
+
         duplicada = (
             db.query(Maquila)
             .filter(
@@ -162,19 +182,24 @@ def update_maquila(
             )
             .first()
         )
+
         if duplicada:
             raise HTTPException(
-                status_code=409,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="Ya existe otra maquila / taller con ese nombre.",
             )
+
         maquila.nombre = nuevo_nombre
 
     if datos.responsable is not None:
         maquila.responsable = datos.responsable.strip()
+
     if datos.telefono is not None:
         maquila.telefono = datos.telefono
+
     if datos.direccion is not None:
         maquila.direccion = datos.direccion.strip()
+
     if datos.estado is not None:
         maquila.estado = datos.estado
 
@@ -182,6 +207,70 @@ def update_maquila(
         db.commit()
         db.refresh(maquila)
         return maquila
+
     except Exception:
         db.rollback()
         raise
+
+
+@router.delete("/{id_maquila}")
+def delete_maquila(
+    id_maquila: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([1])),
+):
+    """
+    Elimina una maquila únicamente dentro de la cuenta activa.
+
+    Si la maquila todavía está vinculada a pedidos u otros registros,
+    MySQL impide la eliminación mediante las claves foráneas y se devuelve
+    un 409 para proteger el historial de producción.
+    """
+    id_cuenta = _validar_cuenta(current_user)
+
+    maquila = (
+        db.query(Maquila)
+        .filter(
+            Maquila.id_maquila == id_maquila,
+            Maquila.id_cuenta == id_cuenta,
+        )
+        .first()
+    )
+
+    if not maquila:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Maquila no encontrada o no pertenece a esta cuenta.",
+        )
+
+    nombre = maquila.nombre
+
+    try:
+        db.delete(maquila)
+        db.commit()
+
+        return {
+            "detail": "Maquila eliminada correctamente.",
+            "id_maquila": id_maquila,
+            "nombre": nombre,
+        }
+
+    except IntegrityError as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "No se puede eliminar esta maquila porque tiene pedidos "
+                "u otros registros relacionados. Para conservar el historial "
+                "de producción, cambie su estado a Inactivo en lugar de eliminarla."
+            ),
+        ) from exc
+
+    except Exception as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"No se pudo eliminar la maquila: {str(exc)}",
+        ) from exc

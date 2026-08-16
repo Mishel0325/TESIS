@@ -1,3 +1,8 @@
+/* =========================================================
+   MAQUILA SYSTEM EC - GESTIÓN DE USUARIOS
+   Namespace msu-* para evitar conflictos con CSS antiguo
+========================================================= */
+
 .msu-overlay,
 .msu-overlay * {
   box-sizing: border-box !important;

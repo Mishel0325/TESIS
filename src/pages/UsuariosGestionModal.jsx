@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
-import "./UsuariosModal.css";
+import "./UsuariosGestionModal.css";
 
 const FORMULARIO_VACIO = {
   nombres: "",
@@ -54,7 +54,7 @@ function inicialesUsuario(usuario) {
   return `${nombres.charAt(0)}${apellidos.charAt(0)}`.toUpperCase() || "U";
 }
 
-export default function UsuariosModal({
+export default function UsuariosGestionModal({
   abierto,
   onCerrar,
   rolInicial = null,

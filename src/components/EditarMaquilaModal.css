@@ -1,0 +1,217 @@
+.editar-maquila-overlay,
+.editar-maquila-overlay * {
+  box-sizing: border-box;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.editar-maquila-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5600;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(8, 28, 49, 0.56);
+  backdrop-filter: blur(2px);
+}
+
+.editar-maquila-modal {
+  width: min(540px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #d8e3ef;
+  border-radius: 16px;
+  box-shadow: 0 24px 75px rgba(6, 25, 45, 0.34);
+}
+
+.editar-maquila-header {
+  min-height: 112px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #075fae 0%, #1680d0 100%);
+}
+
+.editar-maquila-header span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.editar-maquila-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.editar-maquila-header p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+}
+
+.editar-maquila-header button {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 23px;
+}
+
+.editar-maquila-form {
+  max-height: calc(100vh - 148px);
+  overflow-y: auto;
+  padding: 20px 22px 22px;
+}
+
+.editar-maquila-error {
+  margin-bottom: 14px;
+  padding: 11px 13px;
+  color: #9d2e27;
+  background: #fff1ef;
+  border: 1px solid #ffd0cb;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.editar-maquila-id {
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  background: #f1f7fd;
+  border: 1px solid #d7e8f8;
+  border-radius: 9px;
+}
+
+.editar-maquila-id span,
+.editar-maquila-id strong {
+  display: block;
+}
+
+.editar-maquila-id span {
+  color: #6f7d8f;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.editar-maquila-id strong {
+  margin-top: 3px;
+  color: #17466f;
+  font-size: 12px;
+}
+
+.editar-maquila-form label {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.editar-maquila-form label > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #445970;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.editar-maquila-form input,
+.editar-maquila-form select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  color: #263b53;
+  background: #ffffff;
+  border: 1px solid #d4dfeb;
+  border-radius: 8px;
+  outline: none;
+  font-size: 12px;
+}
+
+.editar-maquila-form input:focus,
+.editar-maquila-form select:focus {
+  border-color: #448fd0;
+  box-shadow: 0 0 0 3px rgba(7, 95, 174, 0.09);
+}
+
+.editar-maquila-form small {
+  display: block;
+  margin-top: 5px;
+  color: #718096;
+  font-size: 10px;
+}
+
+.editar-maquila-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e6ecf2;
+}
+
+.editar-maquila-actions button {
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.editar-maquila-actions .secondary {
+  color: #4c6076;
+  background: #ffffff;
+  border: 1px solid #d5dfe9;
+}
+
+.editar-maquila-actions .primary {
+  color: #ffffff;
+  background: #075fae;
+  border: 1px solid #075fae;
+}
+
+.editar-maquila-actions button:disabled,
+.editar-maquila-header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 560px) {
+  .editar-maquila-overlay {
+    padding: 8px;
+  }
+
+  .editar-maquila-modal {
+    width: 100%;
+    max-height: calc(100vh - 16px);
+  }
+
+  .editar-maquila-header {
+    padding: 17px;
+  }
+
+  .editar-maquila-form {
+    padding: 17px;
+  }
+
+  .editar-maquila-actions {
+    flex-direction: column-reverse;
+  }
+
+  .editar-maquila-actions button {
+    width: 100%;
+  }
+}
